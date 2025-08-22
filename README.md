@@ -3,7 +3,6 @@
 ![WordPress](https://img.shields.io/badge/WordPress-6.5+-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2+-blue)
 ![License](https://img.shields.io/badge/License-GPL%20v2+-green)
-![GitHub stars](https://img.shields.io/github/stars/jaz-on/feed-favorites)
 
 **Feed Favorites** is a modern WordPress plugin that automatically synchronizes your starred articles from RSS feeds with your WordPress site.
 
