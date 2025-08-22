@@ -6,10 +6,14 @@
 composer.lock
 package-lock.json
 yarn.lock
+pnpm-lock.yaml
+bun.lockb
 
 # IDE and Editor files
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
 *.swp
 *.swo
 *~
@@ -32,6 +36,12 @@ assets/*.temp
 # Logs
 *.log
 /logs/
+npm-debug.log*
+yarn-error.log
+pnpm-debug.log*
+
+# PHP tooling
+.php-cs-fixer.cache
 
 # Environment files
 .env
@@ -60,6 +70,7 @@ assets/*.temp
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
 # WordPress specific
 wp-config.php

@@ -6,33 +6,39 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Centralized configuration management
+ * Centralized configuration management.
  */
 class Config {
 
 	/**
-	 * Options prefix
+	 * Options prefix.
+	 *
+	 * @var string
 	 */
 	const OPTION_PREFIX = 'feed_favorites_';
 
 	/**
-	 * Default configuration
+	 * Default configuration.
+	 *
+	 * @var array
 	 */
 	private static $defaults = array(
 		'feed_url'      => '',
 		'auto_sync'     => '1',
-		'sync_interval' => '7200', // 2 hours default
+		'sync_interval' => '7200', // 2 hours default.
 		'max_items'     => 50,
 	);
 
 	/**
-	 * Allowed synchronization intervals
+	 * Allowed synchronization intervals.
+	 *
+	 * @var array
 	 */
 	private static $allowed_intervals = array(
 		'900'   => '15 minutes',
@@ -44,22 +50,30 @@ class Config {
 	);
 
 	/**
-	 * Get an option
+	 * Get an option.
+	 *
+	 * @param string $key The option key.
+	 * @param mixed  $default_value The default value if option doesn't exist.
+	 * @return mixed The option value.
 	 */
-	public static function get( $key, $default = null ) {
+	public static function get( $key, $default_value = null ) {
 		$option_name = self::OPTION_PREFIX . $key;
 		$value       = get_option( $option_name );
 
-		// If option doesn't exist, return default value
-		if ( $value === false && isset( self::$defaults[ $key ] ) ) {
+		// If option doesn't exist, return default value.
+		if ( false === $value && isset( self::$defaults[ $key ] ) ) {
 			return self::$defaults[ $key ];
 		}
 
-		return $value !== false ? $value : $default;
+		return false !== $value ? $value : $default_value;
 	}
 
 	/**
-	 * Set an option
+	 * Set an option.
+	 *
+	 * @param string $key The option key.
+	 * @param mixed  $value The value to set.
+	 * @return bool True on success, false on failure.
 	 */
 	public static function set( $key, $value ) {
 		$option_name = self::OPTION_PREFIX . $key;
@@ -67,7 +81,10 @@ class Config {
 	}
 
 	/**
-	 * Delete an option
+	 * Delete an option.
+	 *
+	 * @param string $key The option key.
+	 * @return bool True on success, false on failure.
 	 */
 	public static function delete( $key ) {
 		$option_name = self::OPTION_PREFIX . $key;
@@ -75,7 +92,9 @@ class Config {
 	}
 
 	/**
-	 * Get all options
+	 * Get all options.
+	 *
+	 * @return array All options with their values.
 	 */
 	public static function get_all() {
 		$options = array();
@@ -86,40 +105,49 @@ class Config {
 	}
 
 	/**
-	 * Get allowed intervals
+	 * Get allowed intervals.
+	 *
+	 * @return array Allowed intervals with their labels.
 	 */
 	public static function get_allowed_intervals() {
 		return self::$allowed_intervals;
 	}
 
 	/**
-	 * Validate an interval
+	 * Validate an interval.
+	 *
+	 * @param string $interval The interval to validate.
+	 * @return bool True if valid, false otherwise.
 	 */
 	public static function is_valid_interval( $interval ) {
 		return array_key_exists( $interval, self::$allowed_intervals );
 	}
 
 	/**
-	 * Get default value for an option
+	 * Get default value for an option.
+	 *
+	 * @param string $key The option key.
+	 * @return mixed|null The default value or null if not found.
 	 */
 	public static function get_default( $key ) {
 		return isset( self::$defaults[ $key ] ) ? self::$defaults[ $key ] : null;
 	}
 
 	/**
-	 * Initialize default options
+	 * Initialize default options.
+	 *
+	 * @return void
 	 */
 	public static function init_defaults() {
 		foreach ( self::$defaults as $key => $value ) {
 			$option_name   = self::OPTION_PREFIX . $key;
 			$current_value = get_option( $option_name );
 
-			// If option doesn't exist, create it
-			if ( $current_value === false ) {
+			// If option doesn't exist, create it.
+			if ( false === $current_value ) {
 				add_option( $option_name, $value );
-			}
-			// If it's the sync interval and it's not in allowed values, fix it
-			elseif ( $key === 'sync_interval' && ! self::is_valid_interval( $current_value ) ) {
+			} // If it's the sync interval and it's not in allowed values, fix it.
+			elseif ( 'sync_interval' === $key && ! self::is_valid_interval( $current_value ) ) {
 				update_option( $option_name, $value );
 			}
 		}

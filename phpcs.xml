@@ -3,8 +3,13 @@
 	<description>PHP CodeSniffer ruleset for Feed Favorites plugin</description>
 
 	<!-- Include WordPress Coding Standards -->
+	<rule ref="WordPress-Core"/>
 	<rule ref="WordPress-Extra"/>
 	<rule ref="WordPress-Docs"/>
+
+	<!-- PHPCompatibility for WordPress (PHP 8.2+) -->
+	<config name="testVersion" value="8.2-"/>
+	<rule ref="PHPCompatibilityWP"/>
 
 	<!-- Exclude some rules that are too strict for this project -->
 	<rule ref="WordPress-Extra">
@@ -30,6 +35,8 @@
 	<exclude-pattern>languages/</exclude-pattern>
 	<exclude-pattern>tests/</exclude-pattern>
 	<exclude-pattern>.phpunit.cache/</exclude-pattern>
+	<exclude-pattern>build/</exclude-pattern>
+	<exclude-pattern>dist/</exclude-pattern>
 
 	<!-- Exclude specific files -->
 	<exclude-pattern>*.min.js</exclude-pattern>

@@ -6,18 +6,21 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Reusable components for administration interface
+ * Reusable components for administration interface.
  */
 class Components {
 
 	/**
-	 * Render statistics cards
+	 * Render statistics cards.
+	 *
+	 * @param array $stats The statistics data.
+	 * @return string HTML output.
 	 */
 	public static function render_stats_cards( $stats ) {
 		$total_syncs = isset( $stats['sync_count'] ) && isset( $stats['error_count'] ) ? $stats['sync_count'] + $stats['error_count'] : 0;
@@ -43,7 +46,7 @@ class Components {
 			),
 			array(
 				'icon'  => 'dashicons-clock',
-				'value' => $stats['last_sync'] ? date_i18n( 'd/m/Y H:i', strtotime( $stats['last_sync'] ) ) : __( 'Never', 'feed-favorites' ),
+				'value' => $stats['last_sync'] ? wp_kses_post( date_i18n( 'd/m/Y H:i', strtotime( $stats['last_sync'] ) ) ) : __( 'Never', 'feed-favorites' ),
 				'label' => __( 'Last Sync', 'feed-favorites' ),
 				'class' => 'rss-text-small',
 			),
@@ -250,7 +253,10 @@ class Components {
 	}
 
 	/**
-	 * Render recent logs
+	 * Render recent logs.
+	 *
+	 * @param array $logs The logs data.
+	 * @return string HTML output.
 	 */
 	public static function render_recent_logs( $logs ) {
 		ob_start();
@@ -272,9 +278,9 @@ class Components {
 				<tbody>
 					<?php foreach ( $logs as $log ) : ?>
 						<tr>
-							<td><?php echo date_i18n( 'd/m/Y H:i:s', strtotime( $log['timestamp'] ) ); ?></td>
+							<td><?php echo wp_kses_post( date_i18n( 'd/m/Y H:i:s', strtotime( $log['timestamp'] ) ) ); ?></td>
 							<td>
-								<span style="color: <?php echo $log['level'] === 'ERROR' ? '#dc3232' : '#46b450'; ?>; font-weight: bold;">
+								<span style="color: <?php echo 'ERROR' === $log['level'] ? '#dc3232' : '#46b450'; ?>; font-weight: bold;">
 									<?php echo esc_html( $log['level'] ); ?>
 								</span>
 							</td>
@@ -339,7 +345,7 @@ class Components {
 					<p class="description"><?php echo esc_html( $button['description'] ); ?></p>
 					<button type="button" 
 							id="<?php echo esc_attr( $button['id'] ); ?>" 
-							class="button <?php echo esc_attr( $button['class'] ); ?><?php echo esc_attr( $button['action'] === 'all' ? ' button-link-delete' : '' ); ?>"
+							class="button <?php echo esc_attr( $button['class'] ); ?><?php echo esc_attr( 'all' === $button['action'] ? ' button-link-delete' : '' ); ?>"
 							data-reset-action="<?php echo esc_attr( $button['action'] ); ?>">
 						<?php echo esc_html( $button['text'] ); ?>
 					</button>
@@ -361,20 +367,20 @@ class Components {
 		$upload_max_filesize = ini_get( 'upload_max_filesize' );
 		$post_max_size       = ini_get( 'post_max_size' );
 
-		// Convert memory limit to bytes for comparison
+		// Convert memory limit to bytes for comparison.
 		$memory_limit_bytes        = self::convert_to_bytes( $memory_limit );
 		$upload_max_filesize_bytes = self::convert_to_bytes( $upload_max_filesize );
 		$post_max_size_bytes       = self::convert_to_bytes( $post_max_size );
 
-		// Check if values are sufficient
-		$memory_ok = $memory_limit_bytes >= 256 * 1024 * 1024; // 256MB minimum
-		$time_ok   = $max_execution_time >= 300 || $max_execution_time == 0; // 5 minutes or unlimited
-		$upload_ok = $upload_max_filesize_bytes >= 50 * 1024 * 1024; // 50MB minimum
-		$post_ok   = $post_max_size_bytes >= 50 * 1024 * 1024; // 50MB minimum
+		// Check if values are sufficient.
+		$memory_ok = $memory_limit_bytes >= 256 * 1024 * 1024; // 256MB minimum.
+		$time_ok   = $max_execution_time >= 300 || 0 === $max_execution_time; // 5 minutes or unlimited.
+		$upload_ok = $upload_max_filesize_bytes >= 50 * 1024 * 1024; // 50MB minimum.
+		$post_ok   = $post_max_size_bytes >= 50 * 1024 * 1024; // 50MB minimum.
 
 		$all_ok = $memory_ok && $time_ok && $upload_ok && $post_ok;
 
-		// Check if this is the first time showing the system check
+		// Check if this is the first time showing the system check.
 		$system_check_shown = get_option( 'feed_favorites_system_check_shown', false );
 
 		ob_start();
@@ -414,7 +420,7 @@ class Components {
 				</tr>
 				<tr>
 					<td><strong><?php esc_html_e( 'Max Execution Time', 'feed-favorites' ); ?></strong></td>
-					<td><?php echo $max_execution_time == 0 ? esc_html__( 'Unlimited', 'feed-favorites' ) : esc_html( $max_execution_time . 's' ); ?></td>
+					<td><?php echo 0 === $max_execution_time ? esc_html__( 'Unlimited', 'feed-favorites' ) : esc_html( $max_execution_time . 's' ); ?></td>
 					<td><?php esc_html_e( '300s or unlimited', 'feed-favorites' ); ?></td>
 					<td>
 						<?php if ( $time_ok ) : ?>
@@ -466,7 +472,10 @@ class Components {
 	}
 
 	/**
-	 * Convert PHP size string to bytes
+	 * Convert PHP size string to bytes.
+	 *
+	 * @param string $size_str The size string to convert.
+	 * @return int The size in bytes.
 	 */
 	private static function convert_to_bytes( $size_str ) {
 		$size_str = trim( $size_str );
@@ -476,8 +485,10 @@ class Components {
 		switch ( $last ) {
 			case 'g':
 				$size *= 1024;
+				// Fall through to multiply by 1024 again for MB.
 			case 'm':
 				$size *= 1024;
+				// Fall through to multiply by 1024 again for KB.
 			case 'k':
 				$size *= 1024;
 		}

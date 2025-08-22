@@ -1,12 +1,13 @@
 # Feed Favorites
 
-[![WordPress](https://img.shields.io/badge/WordPress-5.0+-blue.svg)](https://wordpress.org/)
-[![PHP](https://img.shields.io/badge/PHP-7.4+-green.svg)](https://php.net/)
-[![License](https://img.shields.io/badge/License-GPL%20v2%2B-orange.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
+![WordPress](https://img.shields.io/badge/WordPress-6.5+-blue)
+![PHP](https://img.shields.io/badge/PHP-8.2+-blue)
+![License](https://img.shields.io/badge/License-GPL%20v2+-green)
+![GitHub stars](https://img.shields.io/github/stars/jaz-on/feed-favorites)
 
 **Feed Favorites** is a modern WordPress plugin that automatically synchronizes your starred articles from RSS feeds with your WordPress site.
 
-## 🚀 Features
+## Features
 
 - **Automatic synchronization** with RSS feeds
 - **WordPress post creation** from starred articles
@@ -17,14 +18,14 @@
 - **Detailed logging system**
 - **Modern modular architecture**
 
-## 📋 Requirements
+## Requirements
 
 - WordPress 5.0 or higher
-- PHP 7.4 or higher
+- PHP 8.2 or higher
 - ACF Pro plugin (Advanced Custom Fields Pro)
 - RSS feed with starred articles
 
-## 🛠️ Installation
+## Installation
 
 ### Manual Installation
 
@@ -40,7 +41,7 @@ cd wp-content/plugins/
 git clone https://github.com/jaz-on/feed-favorites.git
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 ### Basic Configuration
 
@@ -55,7 +56,7 @@ git clone https://github.com/jaz-on/feed-favorites.git
 - **Templates**: Modify article display
 - **Logs**: Configure logging detail level
 
-## 🏗️ Architecture
+## Architecture
 
 The plugin uses a modern modular architecture:
 
@@ -92,7 +93,7 @@ feed-favorites/
 | `Sync` | Data synchronization |
 | `Logger` | Log management |
 
-## 🔧 Usage
+## Usage
 
 ### Manual Synchronization
 
@@ -131,7 +132,7 @@ add_filter('feed_favorites_item_data', function($item_data, $original_item) {
 }, 10, 2);
 ```
 
-## 📊 Logs and Debugging
+## Logs and Debugging
 
 The plugin includes a complete logging system:
 
@@ -149,7 +150,7 @@ Logger::debug('Received data', $data);
 - **INFO**: General information
 - **DEBUG**: Debug information
 
-## 🧪 Testing
+## Testing
 
 ### Unit Tests
 
@@ -168,7 +169,7 @@ vendor/bin/phpunit
 vendor/bin/phpunit --testsuite integration
 ```
 
-## 🔄 Development
+## Development
 
 ### Code Structure
 
@@ -193,7 +194,7 @@ The plugin follows WordPress standards and PHP best practices:
 4. Push to the branch
 5. Open a Pull Request
 
-## 📝 Changelog
+## Changelog
 
 ### 1.0.0
 - Initial version
@@ -204,30 +205,28 @@ The plugin follows WordPress standards and PHP best practices:
 - ACF Pro support
 - Modern modular architecture
 
-## 🤝 Support
+## Support
 
-- **Documentation**: [Project Wiki](https://github.com/jaz-on/feed-favorites/wiki)
-- **Issues**: [GitHub Issues](https://github.com/jaz-on/feed-favorites/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jaz-on/feed-favorites/discussions)
+- **Repository**: https://github.com/jaz-on/feed-favorites
+- **Issues**: https://github.com/jaz-on/feed-favorites/issues
+- **Releases**: https://github.com/jaz-on/feed-favorites/releases
+- **Documentation**: https://github.com/jaz-on/feed-favorites/wiki
+- **Discussions**: https://github.com/jaz-on/feed-favorites/discussions
 
-## 📄 License
+## License
 
 This project is licensed under GPL v2 or later. See the [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Author
+## Author
 
 **Jason Rouet**
 
 - GitHub: [@jaz-on](https://github.com/jaz-on)
-- Website: [jasonrouet.com](https://jasonrouet.local)
+- Website: [jasonrouet.com](https://jasonrouet.com)
 - Email: [bonjour@jasonrouet.com](mailto:bonjour@jasonrouet.com)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [WordPress](https://wordpress.org/) for the platform
 - [ACF Pro](https://www.advancedcustomfields.com/) for custom fields
 - [RSS](https://en.wikipedia.org/wiki/RSS) for feed standards
-
----
-
-**Feed Favorites** - Synchronize your starred articles with WordPress! 🚀 

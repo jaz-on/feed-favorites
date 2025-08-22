@@ -11,74 +11,76 @@
  * @license GPL-2.0-or-later
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Main plugin class
+ * Main plugin class.
  */
 class FeedFavorites {
 
 	/**
-	 * Single instance of the class
+	 * Single instance of the class.
 	 *
 	 * @var FeedFavorites|null
 	 */
 	private static $instance = null;
 
 	/**
-	 * Plugin version
+	 * Plugin version.
 	 *
 	 * @var string
 	 */
 	const VERSION = '1.0.0';
 
 	/**
-	 * Admin instance
+	 * Admin instance.
 	 *
 	 * @var Admin
 	 */
 	private $admin;
 
 	/**
-	 * Sync instance
+	 * Sync instance.
 	 *
 	 * @var Sync
 	 */
 	private $sync;
 
 	/**
-	 * Logger instance
+	 * Logger instance.
 	 *
 	 * @var Logger
 	 */
 	private $logger;
 
 	/**
-	 * Ajax instance
+	 * Ajax instance.
 	 *
 	 * @var Ajax
 	 */
 	private $ajax;
 
 	/**
-	 * Import instance
+	 * Import instance.
 	 *
 	 * @var Import
 	 */
 	private $import;
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	private function __construct() {
 		$this->init_hooks();
 	}
 
 	/**
-	 * Single instance
+	 * Single instance.
+	 *
+	 * @return FeedFavorites
 	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
@@ -88,40 +90,46 @@ class FeedFavorites {
 	}
 
 	/**
-	 * Initialize hooks
+	 * Initialize hooks.
+	 *
+	 * @return void
 	 */
 	private function init_hooks() {
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 
-		// Cron job for automatic synchronization
+		// Cron job for automatic synchronization.
 		add_action( 'feed_favorites_cron_sync', array( $this, 'cron_sync' ) );
 
-		// Activation hook
+		// Activation hook.
 		register_activation_hook( FEED_FAVORITES_PLUGIN_FILE, array( $this, 'activate' ) );
 		register_deactivation_hook( FEED_FAVORITES_PLUGIN_FILE, array( $this, 'deactivate' ) );
 	}
 
 	/**
-	 * Plugin initialization
+	 * Plugin initialization.
+	 *
+	 * @return void
 	 */
 	public function init() {
-		// Check requirements
+		// Check requirements.
 		$this->check_requirements();
 
-		// Load dependencies
+		// Load dependencies.
 		$this->load_dependencies();
 
-		// Register Custom Post Types
+		// Register Custom Post Types.
 		$this->register_post_types();
 	}
 
 	/**
-	 * Check requirements
+	 * Check requirements.
+	 *
+	 * @return void
 	 */
 	private function check_requirements() {
-		// Check PHP version
+		// Check PHP version.
 		if ( version_compare( PHP_VERSION, '8.2', '<' ) ) {
 			add_action(
 				'admin_notices',
@@ -132,7 +140,7 @@ class FeedFavorites {
 			return;
 		}
 
-		// Check WordPress version
+		// Check WordPress version.
 		if ( version_compare( get_bloginfo( 'version' ), '5.0', '<' ) ) {
 			add_action(
 				'admin_notices',
@@ -143,7 +151,7 @@ class FeedFavorites {
 			return;
 		}
 
-		// Check for ACF Pro
+		// Check for ACF Pro.
 		if ( ! class_exists( 'ACF' ) ) {
 			add_action(
 				'admin_notices',
@@ -155,10 +163,12 @@ class FeedFavorites {
 	}
 
 	/**
-	 * Load dependencies
+	 * Load dependencies.
+	 *
+	 * @return void
 	 */
 	private function load_dependencies() {
-		// Load classes
+		// Load classes.
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-config.php';
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-validator.php';
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-http.php';
@@ -169,7 +179,7 @@ class FeedFavorites {
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-logger.php';
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-import.php';
 
-		// Initialize components
+		// Initialize components.
 		$this->admin  = new Admin();
 		$this->sync   = new Sync();
 		$this->logger = new Logger();
@@ -178,38 +188,44 @@ class FeedFavorites {
 	}
 
 	/**
-	 * Plugin activation
+	 * Plugin activation.
+	 *
+	 * @return void
 	 */
 	public function activate() {
-		// Check requirements before activation
+		// Check requirements before activation.
 		if ( version_compare( PHP_VERSION, '8.2', '<' ) || version_compare( get_bloginfo( 'version' ), '5.0', '<' ) ) {
 			deactivate_plugins( plugin_basename( FEED_FAVORITES_PLUGIN_FILE ) );
 			wp_die( 'Feed Favorites requires PHP 8.2+ and WordPress 5.0+' );
 		}
 
-		// Initialize configuration
+		// Initialize configuration.
 		Config::init_defaults();
 
-		// Schedule cron job
+		// Schedule cron job.
 		$this->schedule_cron();
 
-		// Flush rewrite rules
+		// Flush rewrite rules.
 		flush_rewrite_rules();
 	}
 
 	/**
-	 * Plugin deactivation
+	 * Plugin deactivation.
+	 *
+	 * @return void
 	 */
 	public function deactivate() {
-		// Clean up cron job
+		// Clean up cron job.
 		wp_clear_scheduled_hook( 'feed_favorites_cron_sync' );
 
-		// Flush rewrite rules
+		// Flush rewrite rules.
 		flush_rewrite_rules();
 	}
 
 	/**
-	 * Schedule cron job
+	 * Schedule cron job.
+	 *
+	 * @return void
 	 */
 	private function schedule_cron() {
 		if ( ! wp_next_scheduled( 'feed_favorites_cron_sync' ) ) {
@@ -218,10 +234,12 @@ class FeedFavorites {
 	}
 
 	/**
-	 * Register Custom Post Types
+	 * Register Custom Post Types.
+	 *
+	 * @return void
 	 */
 	private function register_post_types() {
-		// CPT for favorite articles
+		// CPT for favorite articles.
 		$labels = array(
 			'name'               => __( 'Favorite Articles', 'feed-favorites' ),
 			'singular_name'      => __( 'Favorite Article', 'feed-favorites' ),
@@ -262,10 +280,12 @@ class FeedFavorites {
 	}
 
 	/**
-	 * Add admin menu
+	 * Add admin menu.
+	 *
+	 * @return void
 	 */
 	public function add_admin_menu() {
-		// Add submenu page to the Feed Favorites CPT menu
+		// Add submenu page to the Feed Favorites CPT menu.
 		add_submenu_page(
 			'edit.php?post_type=favorite',
 			__( 'Feed Favorites Settings', 'feed-favorites' ),
@@ -277,15 +297,19 @@ class FeedFavorites {
 	}
 
 	/**
-	 * Initialize admin
+	 * Initialize admin.
+	 *
+	 * @return void
 	 */
 	public function admin_init() {
-		// Register settings with sanitization
+		// Register settings with sanitization.
 		$this->register_settings();
 	}
 
 	/**
-	 * Register settings
+	 * Register settings.
+	 *
+	 * @return void
 	 */
 	private function register_settings() {
 		$settings = array(
@@ -315,27 +339,31 @@ class FeedFavorites {
 	}
 
 	/**
-	 * Admin page
+	 * Admin page.
+	 *
+	 * @return void
 	 */
 	public function admin_page() {
-		// Check permissions
+		// Check permissions.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have sufficient permissions.', 'feed-favorites' ) );
 		}
 
-		// Get data for template
+		// Get data for template.
 		$stats = $this->logger->get_stats();
 		$logs  = $this->logger->get_recent_logs( 10 );
 
-		// Pass Admin instance to template
+		// Pass Admin instance to template.
 		$admin = $this->admin;
 
-		// Include admin template
+		// Include admin template.
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'admin/views/admin-page.php';
 	}
 
 	/**
-	 * Automatic synchronization via cron
+	 * Automatic synchronization via cron.
+	 *
+	 * @return void
 	 */
 	public function cron_sync() {
 		$this->sync->automatic_sync();

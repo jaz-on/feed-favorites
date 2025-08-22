@@ -6,68 +6,75 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * RSS favorites JSON import management
+ * RSS favorites JSON import management.
  */
 class Import {
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	public function __construct() {
 		add_action( 'admin_post_feed_favorites_json_import', array( $this, 'handle_json_import' ) );
 	}
 
 	/**
-	 * Handle JSON import
+	 * Handle JSON import.
+	 *
+	 * @return void
 	 */
 	public function handle_json_import() {
-		// Security verification
-		if ( ! wp_verify_nonce( $_POST['feed_favorites_json_nonce'], 'feed_favorites_json_import' ) ) {
+		// Security verification.
+		if ( ! isset( $_POST['feed_favorites_json_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['feed_favorites_json_nonce'] ) ), 'feed_favorites_json_import' ) ) {
 			wp_die( esc_html__( 'Security', 'feed-favorites' ) );
 		}
 
-		// Check permissions
+		// Check permissions.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Insufficient permissions', 'feed-favorites' ) );
 		}
 
-		// Sanitize input data
+		// Sanitize input data.
 		$batch_size   = isset( $_POST['rss_batch_size'] ) ? intval( $_POST['rss_batch_size'] ) : 20;
 		$import_limit = isset( $_POST['rss_import_limit'] ) ? intval( $_POST['rss_import_limit'] ) : 50;
 
-		// Check file
-		if ( ! isset( $_FILES['rss_json_file'] ) || $_FILES['rss_json_file']['error'] !== UPLOAD_ERR_OK ) {
+		// Check file and sanitize file upload data.
+		if ( ! isset( $_FILES['rss_json_file'] ) || ! isset( $_FILES['rss_json_file']['error'] ) || UPLOAD_ERR_OK !== $_FILES['rss_json_file']['error'] ) {
 			$this->redirect_with_error( __( 'Error uploading file', 'feed-favorites' ) );
 		}
 
-		$file = $_FILES['rss_json_file'];
+		// Sanitize file array to prevent any potential issues.
+		$file = array_map( 'sanitize_text_field', $_FILES['rss_json_file'] );
+		// Preserve original tmp_name for file operations (don't sanitize file paths).
+		if ( isset( $_FILES['rss_json_file']['tmp_name'] ) ) {
+			$file['tmp_name'] = $_FILES['rss_json_file']['tmp_name']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		}
 
-		// Security check - verify that the file was uploaded via HTTP POST
+		// Security check - verify that the file was uploaded via HTTP POST.
 		if ( ! is_uploaded_file( $file['tmp_name'] ) ) {
 			$this->redirect_with_error( __( 'Security violation: Invalid file upload', 'feed-favorites' ) );
 		}
 
-		// Enhanced file validation
+		// Enhanced file validation.
 		$file_extension     = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
 		$allowed_extensions = array( 'json', 'xml' );
 
-		if ( ! in_array( $file_extension, $allowed_extensions ) ) {
+		if ( ! in_array( $file_extension, $allowed_extensions, true ) ) {
 			$this->redirect_with_error( __( 'File must be JSON or XML format', 'feed-favorites' ) );
 		}
 
-		// Check file size (max 10MB)
-		$max_size = 10 * 1024 * 1024; // 10MB
+		// Check file size (max 10MB).
+		$max_size = 10 * 1024 * 1024; // 10MB.
 		if ( $file['size'] > $max_size ) {
 			$this->redirect_with_error( __( 'File size exceeds maximum allowed size (10MB)', 'feed-favorites' ) );
 		}
 
-		// Validate MIME type
+		// Validate MIME type.
 		$finfo     = finfo_open( FILEINFO_MIME_TYPE );
 		$mime_type = finfo_file( $finfo, $file['tmp_name'] );
 		finfo_close( $finfo );
@@ -77,28 +84,28 @@ class Import {
 			'xml'  => array( 'application/xml', 'text/xml', 'text/plain' ),
 		);
 
-		if ( ! in_array( $mime_type, $allowed_mimes[ $file_extension ] ) ) {
+		if ( ! in_array( $mime_type, $allowed_mimes[ $file_extension ], true ) ) {
 			$this->redirect_with_error( __( 'Invalid file type detected', 'feed-favorites' ) );
 		}
 
-		// Read file with error handling
-		$file_content = file_get_contents( $file['tmp_name'] );
-		if ( $file_content === false ) {
+		// Read file with error handling (local file only, not URL).
+		$file_content = file_get_contents( $file['tmp_name'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		if ( false === $file_content ) {
 			$this->redirect_with_error( __( 'Unable to read file', 'feed-favorites' ) );
 		}
 
-		// Process based on file type
-		if ( $file_extension === 'json' ) {
+		// Process based on file type.
+		if ( 'json' === $file_extension ) {
 			$data = json_decode( $file_content, true );
-			if ( json_last_error() !== JSON_ERROR_NONE ) {
+			if ( JSON_ERROR_NONE !== json_last_error() ) {
 				$this->redirect_with_error( __( 'Invalid JSON file', 'feed-favorites' ) );
 			}
 		} else {
-			// XML processing (to be implemented later)
+			// XML processing (to be implemented later).
 			$this->redirect_with_error( __( 'XML import not yet implemented', 'feed-favorites' ) );
 		}
 
-		// Validate options
+		// Validate options.
 		if ( $batch_size < 5 || $batch_size > 100 ) {
 			$batch_size = 20;
 		}
@@ -107,29 +114,35 @@ class Import {
 			$import_limit = 50;
 		}
 
-		// Check system requirements before import
+		// Check system requirements before import.
 		$system_check = $this->check_system_requirements( $data, $batch_size, $import_limit );
 		if ( is_wp_error( $system_check ) ) {
 			$this->redirect_with_error( $system_check->get_error_message() );
 		}
 
-		// Process import with batches
+		// Process import with batches.
 		$result = $this->process_json_import_batched( $data, $batch_size, $import_limit );
 
 		if ( is_wp_error( $result ) ) {
 			$this->redirect_with_error( $result->get_error_message() );
 		} else {
+			/* translators: 1: Number of imported articles, 2: Number of batches */
 			$this->redirect_with_success( sprintf( __( 'Import successful! %1$d articles imported in %2$d batches', 'feed-favorites' ), $result['imported'], $result['batches'] ) );
 		}
 	}
 
 	/**
-	 * Process JSON import with batches
+	 * Process JSON import with batches.
+	 *
+	 * @param array $data The JSON data to import.
+	 * @param int   $batch_size The size of each batch.
+	 * @param int   $import_limit The maximum number of items to import.
+	 * @return array|WP_Error Import result or error.
 	 */
 	private function process_json_import_batched( $data, $batch_size, $import_limit ) {
 		$logger = new Logger();
 
-		// Detect JSON format
+		// Detect JSON format.
 		$entries = $this->detect_and_extract_entries( $data );
 		if ( is_wp_error( $entries ) ) {
 			return $entries;
@@ -137,19 +150,20 @@ class Import {
 
 		$total_entries = count( $entries );
 
-		// Apply import limit
+		// Apply import limit.
 		if ( $import_limit > 0 && $total_entries > $import_limit ) {
 			$entries       = array_slice( $entries, 0, $import_limit );
 			$total_entries = $import_limit;
 		}
 
+		/* translators: 1: Number of articles to process, 2: Batch size */
 		$logger->log_info( sprintf( __( 'Starting JSON import by batches: %1$d articles to process, batch size: %2$d', 'feed-favorites' ), $total_entries, $batch_size ) );
 
 		$imported_count = 0;
 		$skipped_count  = 0;
 		$batch_count    = 0;
 
-		// Process by batches
+		// Process by batches.
 		$batches = array_chunk( $entries, $batch_size );
 
 		foreach ( $batches as $batch_index => $batch ) {
@@ -157,12 +171,14 @@ class Import {
 			$batch_start = $batch_index * $batch_size + 1;
 			$batch_end   = min( ( $batch_index + 1 ) * $batch_size, $total_entries );
 
-			// Check available memory before processing batch
+			// Check available memory before processing batch.
 			$memory_limit = ini_get( 'memory_limit' );
 			$memory_usage = memory_get_usage( true );
 			$memory_peak  = memory_get_peak_usage( true );
 
+									/* translators: 1: Current batch number, 2: Total batches, 3: Start article number, 4: End article number, 5: Memory usage, 6: Memory limit */
 			$logger->log_info(
+				/* translators: 1: Current batch number, 2: Total batches, 3: Start article number, 4: End article number, 5: Memory usage, 6: Memory limit */
 				sprintf(
 					__( 'Processing batch %1$d/%2$d (articles %3$d-%4$d) - Memory: %5$s/%6$s', 'feed-favorites' ),
 					$batch_count,
@@ -174,10 +190,10 @@ class Import {
 				)
 			);
 
-			// If memory usage is too high, pause longer
-			if ( $memory_usage > 100 * 1024 * 1024 ) { // 100MB
+			// If memory usage is too high, pause longer.
+			if ( $memory_usage > 100 * 1024 * 1024 ) { // 100MB.
 				$logger->log_error( __( 'High memory usage detected, pausing for memory cleanup', 'feed-favorites' ) );
-				usleep( 1000000 ); // 1 second
+				usleep( 1000000 ); // 1 second.
 				if ( function_exists( 'gc_collect_cycles' ) ) {
 					gc_collect_cycles();
 				}
@@ -185,24 +201,25 @@ class Import {
 
 			foreach ( $batch as $entry ) {
 				$result = $this->process_json_entry( $entry );
-				if ( $result === true ) {
+				if ( true === $result ) {
 					++$imported_count;
 				} else {
 					++$skipped_count;
 				}
 			}
 
-			// Pause between batches to avoid server overload and memory issues
+			// Pause between batches to avoid server overload and memory issues.
 			if ( $batch_count < count( $batches ) ) {
-				usleep( 500000 ); // 0.5 second
+				usleep( 500000 ); // 0.5 second.
 
-				// Force garbage collection to free memory
+				// Force garbage collection to free memory.
 				if ( function_exists( 'gc_collect_cycles' ) ) {
 					gc_collect_cycles();
 				}
 			}
 		}
 
+		/* translators: 1: Number of imported articles, 2: Number of skipped articles, 3: Number of batches processed */
 		$logger->log_success( sprintf( __( 'JSON import completed: %1$d imported, %2$d skipped, %3$d batches processed', 'feed-favorites' ), $imported_count, $skipped_count, $batch_count ) );
 
 		return array(
@@ -214,13 +231,16 @@ class Import {
 	}
 
 	/**
-	 * Process JSON import (old method - kept for compatibility)
+	 * Process JSON import (old method - kept for compatibility).
+	 *
+	 * @param array $data The JSON data to import.
+	 * @return int|WP_Error Number of imported items or error.
 	 */
 	private function process_json_import( $data ) {
 		$logger = new Logger();
 		$sync   = new Sync();
 
-		// Detect JSON format
+		// Detect JSON format.
 		$entries = $this->detect_and_extract_entries( $data );
 		if ( is_wp_error( $entries ) ) {
 			return $entries;
@@ -230,41 +250,46 @@ class Import {
 		$imported_count = 0;
 		$skipped_count  = 0;
 
+		/* translators: %d: Number of articles to process */
 		$logger->log_info( sprintf( __( 'Starting JSON import: %d articles to process', 'feed-favorites' ), $total_entries ) );
 
 		foreach ( $entries as $entry ) {
 			$result = $this->process_json_entry( $entry );
-			if ( $result === true ) {
+			if ( true === $result ) {
 				++$imported_count;
 			} else {
 				++$skipped_count;
 			}
 		}
 
+		/* translators: 1: Number of imported articles, 2: Number of skipped articles */
 		$logger->log_success( sprintf( __( 'JSON import completed: %1$d imported, %2$d skipped', 'feed-favorites' ), $imported_count, $skipped_count ) );
 
 		return $imported_count;
 	}
 
 	/**
-	 * Process a JSON entry
+	 * Process a JSON entry.
+	 *
+	 * @param array $entry The JSON entry to process.
+	 * @return bool True if processed successfully, false otherwise.
 	 */
 	private function process_json_entry( $entry ) {
 		$logger = new Logger();
 
-		// Validate required data
+		// Validate required data.
 		if ( empty( $entry['title'] ) || empty( $entry['url'] ) ) {
 			$logger->log_error( 'JSON import: Missing data for entry - empty title or URL' );
 			return false;
 		}
 
-		// Check if article already exists
+		// Check if article already exists.
 		if ( $this->entry_exists( $entry['url'] ) ) {
 			$logger->log_info( 'JSON import: Article already exists - ' . $entry['url'] );
 			return false;
 		}
 
-		// Prepare data
+		// Prepare data.
 		$data = array(
 			'title'        => sanitize_text_field( $entry['title'] ),
 			'link'         => esc_url_raw( $entry['url'] ),
@@ -275,13 +300,13 @@ class Import {
 			'source_url'   => isset( $entry['feed_url'] ) ? esc_url_raw( $entry['feed_url'] ) : '',
 		);
 
-		// Check that CPT exists
+		// Check that CPT exists.
 		if ( ! post_type_exists( 'favorite' ) ) {
 			$logger->log_error( 'JSON import: CPT favorite not registered - unable to create post' );
 			return false;
 		}
 
-		// Create post
+		// Create post.
 		$post_id = $this->create_post( $data );
 
 		if ( is_wp_error( $post_id ) ) {
@@ -289,7 +314,7 @@ class Import {
 			return false;
 		}
 
-		// Update ACF fields
+		// Update ACF fields.
 		$this->update_acf_fields( $post_id, $data );
 
 		$logger->log_success( 'JSON import: Post created successfully - ID: ' . $post_id . ' - Title: ' . $data['title'] );
@@ -297,21 +322,27 @@ class Import {
 	}
 
 	/**
-	 * Check if entry exists
+	 * Check if entry exists.
+	 *
+	 * @param string $url The URL to check.
+	 * @return bool True if entry exists, false otherwise.
 	 */
 	private function entry_exists( $url ) {
 		$existing_post = get_posts(
 			array(
-				'post_type'      => 'favorite',
-				'meta_query'     => array(
+				'post_type'              => 'favorite',
+				'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 					array(
 						'key'     => 'feed_link',
 						'value'   => $url,
 						'compare' => '=',
 					),
 				),
-				'posts_per_page' => 1,
-				'post_status'    => 'any',
+				'posts_per_page'         => 1,
+				'post_status'            => 'any',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
 			)
 		);
 
@@ -319,7 +350,10 @@ class Import {
 	}
 
 	/**
-	 * Create a post
+	 * Create a post.
+	 *
+	 * @param array $data The post data.
+	 * @return int|WP_Error The post ID or error.
 	 */
 	private function create_post( $data ) {
 		$post_data = array(
@@ -335,7 +369,11 @@ class Import {
 	}
 
 	/**
-	 * Update ACF fields
+	 * Update ACF fields.
+	 *
+	 * @param int   $post_id The post ID.
+	 * @param array $data The data to update.
+	 * @return void
 	 */
 	private function update_acf_fields( $post_id, $data ) {
 		if ( ! function_exists( 'update_field' ) ) {
@@ -356,17 +394,20 @@ class Import {
 	}
 
 	/**
-	 * Redirect with error message
+	 * Redirect with error message.
+	 *
+	 * @param string $message The error message.
+	 * @return void
 	 */
 	private function redirect_with_error( $message ) {
 		$logger = new Logger();
 		$logger->log_error( 'JSON import: ' . $message );
 
-		wp_redirect(
+		wp_safe_redirect(
 			add_query_arg(
 				array(
 					'page'         => 'feed-favorites',
-					'import_error' => urlencode( $message ),
+					'import_error' => rawurlencode( $message ),
 				),
 				admin_url( 'options-general.php' )
 			)
@@ -375,17 +416,20 @@ class Import {
 	}
 
 	/**
-	 * Redirect with success message
+	 * Redirect with success message.
+	 *
+	 * @param string $message The success message.
+	 * @return void
 	 */
 	private function redirect_with_success( $message ) {
 		$logger = new Logger();
 		$logger->log_success( 'JSON import: ' . $message );
 
-		wp_redirect(
+		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page'         => 'feed-favorites',
-					'import_error' => urlencode( $message ),
+					'page'           => 'feed-favorites',
+					'import_success' => rawurlencode( $message ),
 				),
 				admin_url( 'options-general.php' )
 			)
@@ -394,20 +438,23 @@ class Import {
 	}
 
 	/**
-	 * Detect and extract entries based on JSON format
+	 * Detect and extract entries based on JSON format.
+	 *
+	 * @param array $data The JSON data to analyze.
+	 * @return array|WP_Error Normalized entries or error.
 	 */
 	public function detect_and_extract_entries( $data ) {
-		// Format 1: Simple format (starred.json)
+		// Format 1: Simple format (starred.json).
 		if ( is_array( $data ) && ! empty( $data ) && isset( $data[0]['id'] ) && isset( $data[0]['title'] ) && isset( $data[0]['url'] ) ) {
 			return $this->normalize_simple_format( $data );
 		}
 
-		// Format 2: FreshRSS/Google Reader format (starred_2025-07-13.json)
+		// Format 2: FreshRSS/Google Reader format (starred_2025-07-13.json).
 		if ( isset( $data['items'] ) && is_array( $data['items'] ) ) {
 			return $this->normalize_freshrss_format( $data['items'] );
 		}
 
-		// Format 3: Old format with starred_entries (compatibility)
+		// Format 3: Old format with starred_entries (compatibility).
 		if ( isset( $data['starred_entries'] ) && is_array( $data['starred_entries'] ) ) {
 			return $data['starred_entries'];
 		}
@@ -416,7 +463,10 @@ class Import {
 	}
 
 	/**
-	 * Normalize simple format (starred.json)
+	 * Normalize simple format (starred.json).
+	 *
+	 * @param array $entries The entries to normalize.
+	 * @return array Normalized entries.
 	 */
 	private function normalize_simple_format( $entries ) {
 		$normalized = array();
@@ -437,13 +487,16 @@ class Import {
 	}
 
 	/**
-	 * Normalize FreshRSS/Google Reader format (starred_2025-07-13.json)
+	 * Normalize FreshRSS/Google Reader format (starred_2025-07-13.json).
+	 *
+	 * @param array $items The items to normalize.
+	 * @return array Normalized items.
 	 */
 	private function normalize_freshrss_format( $items ) {
 		$normalized = array();
 
 		foreach ( $items as $item ) {
-			// Extract URL from canonical or alternate
+			// Extract URL from canonical or alternate.
 			$url = '';
 			if ( isset( $item['canonical'][0]['href'] ) ) {
 				$url = $item['canonical'][0]['href'];
@@ -451,24 +504,24 @@ class Import {
 				$url = $item['alternate'][0]['href'];
 			}
 
-			// Extract content
+			// Extract content.
 			$content = '';
 			if ( isset( $item['content']['content'] ) ) {
 				$content = $item['content']['content'];
 			}
 
-			// Extract publication date
+			// Extract publication date.
 			$published = current_time( 'mysql' );
 			if ( isset( $item['published'] ) ) {
-				// Convert Unix timestamp to MySQL format
+							// Convert Unix timestamp to MySQL format.
 				if ( is_numeric( $item['published'] ) ) {
-					$published = date( 'Y-m-d H:i:s', $item['published'] );
+					$published = gmdate( 'Y-m-d H:i:s', $item['published'] );
 				} else {
 					$published = $item['published'];
 				}
 			}
 
-			// Extract source information
+			// Extract source information.
 			$source_title = '';
 			$source_url   = '';
 			if ( isset( $item['origin'] ) ) {
@@ -491,28 +544,32 @@ class Import {
 	}
 
 	/**
-	 * Check system requirements before import
+	 * Check system requirements before import.
+	 *
+	 * @param array $data The data to import.
+	 * @return bool|WP_Error True if requirements met, error otherwise.
 	 */
-	private function check_system_requirements( $data, $batch_size, $import_limit ) {
+	private function check_system_requirements( $data ) {
 		$logger = new Logger();
 
-		// Get system limits
+		// Get system limits.
 		$memory_limit        = ini_get( 'memory_limit' );
 		$max_execution_time  = ini_get( 'max_execution_time' );
 		$upload_max_filesize = ini_get( 'upload_max_filesize' );
 		$post_max_size       = ini_get( 'post_max_size' );
 
-		// Convert to bytes for comparison
+		// Convert to bytes for comparison.
 		$memory_limit_bytes        = $this->convert_to_bytes( $memory_limit );
 		$upload_max_filesize_bytes = $this->convert_to_bytes( $upload_max_filesize );
 		$post_max_size_bytes       = $this->convert_to_bytes( $post_max_size );
 
-		// Estimate required memory based on data size
+		// Estimate required memory based on data size.
 		$estimated_entries = $this->estimate_entries_count( $data );
 		$estimated_memory  = $estimated_entries * 1024 * 10; // ~10KB per entry
 
-		// Check memory requirements
+		// Check memory requirements.
 		if ( $memory_limit_bytes > 0 && $estimated_memory > $memory_limit_bytes * 0.8 ) {
+			/* translators: 1: Estimated memory usage, 2: Available memory limit */
 			$logger->log_error(
 				sprintf(
 					__( 'Memory limit too low for import. Estimated: %1$s, Available: %2$s', 'feed-favorites' ),
@@ -521,8 +578,10 @@ class Import {
 				)
 			);
 
+			/* translators: 1: Estimated memory requirement, 2: Available memory limit */
 			return new WP_Error(
 				'insufficient_memory',
+				/* translators: 1: Estimated memory requirement, 2: Available memory limit */
 				sprintf(
 					__( 'Insufficient memory for import. Estimated requirement: %1$s, Available: %2$s. Please reduce batch size or contact your hosting provider to increase memory limit.', 'feed-favorites' ),
 					size_format( $estimated_memory ),
@@ -531,8 +590,9 @@ class Import {
 			);
 		}
 
-		// Check execution time
+		// Check execution time.
 		if ( $max_execution_time > 0 && $max_execution_time < 300 ) {
+			/* translators: %s: Execution time limit in seconds */
 			$logger->log_error(
 				sprintf(
 					__( 'Execution time limit too low: %s seconds', 'feed-favorites' ),
@@ -540,8 +600,10 @@ class Import {
 				)
 			);
 
+			/* translators: %s: Execution time limit in seconds */
 			return new WP_Error(
 				'insufficient_time',
+				/* translators: %s: Execution time limit in seconds */
 				sprintf(
 					__( 'Execution time limit too low (%s seconds). Large imports may timeout. Contact your hosting provider to increase max_execution_time.', 'feed-favorites' ),
 					$max_execution_time
@@ -549,8 +611,9 @@ class Import {
 			);
 		}
 
-		// Check file upload limits
+		// Check file upload limits.
 		if ( $upload_max_filesize_bytes > 0 && $upload_max_filesize_bytes < 50 * 1024 * 1024 ) {
+			/* translators: %s: Upload file size limit */
 			$logger->log_error(
 				sprintf(
 					__( 'Upload file size limit too low: %s', 'feed-favorites' ),
@@ -558,8 +621,10 @@ class Import {
 				)
 			);
 
+			/* translators: %s: Upload file size limit */
 			return new WP_Error(
 				'insufficient_upload_size',
+				/* translators: %s: Upload file size limit */
 				sprintf(
 					__( 'Upload file size limit too low (%s). Large export files may fail to upload. Contact your hosting provider.', 'feed-favorites' ),
 					$upload_max_filesize
@@ -567,12 +632,13 @@ class Import {
 			);
 		}
 
-		// Log system check results
+		/* translators: 1: Memory limit, 2: Execution time, 3: Upload file size limit, 4: Number of estimated entries */
 		$logger->log_info(
+			/* translators: 1: Memory limit, 2: Execution time, 3: Upload file size limit, 4: Number of estimated entries */
 			sprintf(
 				__( 'System check passed. Memory: %1$s, Time: %2$ss, Upload: %3$s, Estimated entries: %4$d', 'feed-favorites' ),
 				$memory_limit,
-				$max_execution_time == 0 ? 'unlimited' : $max_execution_time,
+				0 === $max_execution_time ? 'unlimited' : $max_execution_time,
 				$upload_max_filesize,
 				$estimated_entries
 			)
@@ -582,7 +648,10 @@ class Import {
 	}
 
 	/**
-	 * Estimate number of entries in data
+	 * Estimate number of entries in data.
+	 *
+	 * @param array $data The data to analyze.
+	 * @return int Number of estimated entries.
 	 */
 	private function estimate_entries_count( $data ) {
 		if ( is_array( $data ) ) {
@@ -598,7 +667,10 @@ class Import {
 	}
 
 	/**
-	 * Convert PHP size string to bytes
+	 * Convert PHP size string to bytes.
+	 *
+	 * @param string $size_str The size string to convert.
+	 * @return int The size in bytes.
 	 */
 	private function convert_to_bytes( $size_str ) {
 		$size_str = trim( $size_str );
@@ -608,8 +680,10 @@ class Import {
 		switch ( $last ) {
 			case 'g':
 				$size *= 1024;
+				// Fall through to multiply by 1024 again for MB.
 			case 'm':
 				$size *= 1024;
+				// Fall through to multiply by 1024 again for KB.
 			case 'k':
 				$size *= 1024;
 		}

@@ -6,30 +6,38 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Centralized HTTP request management
+ * Centralized HTTP request management.
  */
 class Http {
 
 	/**
-	 * Plugin user agent
+	 * Plugin user agent.
+	 *
+	 * @var string
 	 */
 	private static $user_agent = 'FeedFavorites/' . FEED_FAVORITES_VERSION;
 
 	/**
-	 * Default headers
+	 * Default headers.
+	 *
+	 * @var array
 	 */
 	private static $default_headers = array(
 		'Accept' => 'application/atom+xml, application/xml, text/xml, */*',
 	);
 
 	/**
-	 * Fetch a feed
+	 * Fetch a feed.
+	 *
+	 * @param string $url The URL to fetch.
+	 * @param int    $timeout The timeout in seconds.
+	 * @return array|WP_Error Response array or error.
 	 */
 	public static function fetch_feed( $url, $timeout = 15 ) {
 		$args = array(
@@ -42,7 +50,11 @@ class Http {
 	}
 
 	/**
-	 * Test URL connectivity
+	 * Test URL connectivity.
+	 *
+	 * @param string $url The URL to test.
+	 * @param int    $timeout The timeout in seconds.
+	 * @return string|WP_Error Response body or error.
 	 */
 	public static function test_url( $url, $timeout = 15 ) {
 		$response = self::fetch_feed( $url, $timeout );
@@ -52,7 +64,8 @@ class Http {
 		}
 
 		$status_code = wp_remote_retrieve_response_code( $response );
-		if ( $status_code !== 200 ) {
+		if ( 200 !== $status_code ) {
+			/* translators: %d: HTTP status code */
 			return new WP_Error( 'http_error', sprintf( __( 'HTTP error %d. Feed is not accessible.', 'feed-favorites' ), $status_code ) );
 		}
 
@@ -65,10 +78,13 @@ class Http {
 	}
 
 	/**
-	 * Validate XML feed
+	 * Validate XML feed.
+	 *
+	 * @param string $body The XML body to validate.
+	 * @return SimpleXMLElement|WP_Error Valid XML object or error.
 	 */
 	public static function validate_xml( $body ) {
-		// Validate XML format
+		// Validate XML format.
 		libxml_use_internal_errors( true );
 		$xml = simplexml_load_string( $body );
 		libxml_clear_errors();
@@ -77,7 +93,7 @@ class Http {
 			return new WP_Error( 'invalid_xml', __( 'Content is not valid XML.', 'feed-favorites' ) );
 		}
 
-		// Check RSS structure
+		// Check RSS structure.
 		if ( ! isset( $xml->channel->item ) ) {
 			return new WP_Error( 'invalid_rss', __( 'Format is not a valid RSS feed.', 'feed-favorites' ) );
 		}
@@ -86,7 +102,10 @@ class Http {
 	}
 
 	/**
-	 * Complete feed URL test
+	 * Complete feed URL test.
+	 *
+	 * @param string $url The feed URL to test.
+	 * @return string|WP_Error Success message or error.
 	 */
 	public static function test_feed_url( $url ) {
 		$body = self::test_url( $url );
@@ -103,9 +122,10 @@ class Http {
 
 		$entry_count = count( $xml->channel->item );
 
-		if ( $entry_count === 0 ) {
+		if ( 0 === $entry_count ) {
 			return __( 'Valid feed but empty. No starred articles found.', 'feed-favorites' );
 		} else {
+			/* translators: %d: Number of articles found */
 			return sprintf( __( 'Valid RSS feed! %d starred article(s) found.', 'feed-favorites' ), $entry_count );
 		}
 	}

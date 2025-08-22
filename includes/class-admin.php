@@ -6,18 +6,18 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Administration interface management
+ * Administration interface management.
  */
 class Admin {
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	public function __construct() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -25,14 +25,17 @@ class Admin {
 	}
 
 	/**
-	 * Load administration scripts
+	 * Load administration scripts.
+	 *
+	 * @param string $hook The current admin page hook.
+	 * @return void
 	 */
 	public function enqueue_scripts( $hook ) {
 		if ( 'favorite_page_feed-favorites' !== $hook ) {
 			return;
 		}
 
-		// Load CSS
+		// Load CSS.
 		wp_enqueue_style(
 			'feed-favorites-admin',
 			FEED_FAVORITES_PLUGIN_URL . 'admin/css/admin.css',
@@ -48,7 +51,7 @@ class Admin {
 			true
 		);
 
-		// Enable native WordPress postbox toggles (collapse/expand)
+		// Enable native WordPress postbox toggles (collapse/expand).
 		wp_enqueue_script( 'postbox' );
 		wp_add_inline_script(
 			'feed-favorites-admin',
@@ -72,7 +75,11 @@ class Admin {
 	}
 
 	/**
-	 * Add plugin action links
+	 * Add plugin action links.
+	 *
+	 * @param array  $links The existing action links.
+	 * @param string $file The plugin file.
+	 * @return array Modified action links.
 	 */
 	public function add_plugin_action_links( $links, $file ) {
 		if ( plugin_basename( FEED_FAVORITES_PLUGIN_PATH . 'feed-favorites.php' ) === $file ) {
@@ -87,9 +94,12 @@ class Admin {
 	}
 
 	/**
-	 * Render dashboard tab
+	 * Render dashboard tab.
+	 *
+	 * @param array $stats The statistics data.
+	 * @return void
 	 */
-	public function render_dashboard_tab( $stats, $logs, $pending_stars ) {
+	public function render_dashboard_tab( $stats ) {
 		?>
 		<div class="metabox-holder">
 			<!-- Overview -->
@@ -369,7 +379,11 @@ class Admin {
 	}
 
 	/**
-	 * Render maintenance tab
+	 * Render maintenance tab.
+	 *
+	 * @param array $stats The statistics data.
+	 * @param array $logs The logs data.
+	 * @return void
 	 */
 	public function render_maintenance_tab( $stats, $logs ) {
 		?>
@@ -382,7 +396,7 @@ class Admin {
 				</h2>
 				<div class="inside">
 					<p class="description"><?php esc_html_e( 'Check if your server meets the plugin requirements', 'feed-favorites' ); ?></p>
-					<?php echo Components::render_system_check(); ?>
+					<?php echo wp_kses_post( Components::render_system_check() ); ?>
 				</div>
 			</div>
 			
@@ -393,7 +407,7 @@ class Admin {
 					<?php esc_html_e( 'Recent Logs', 'feed-favorites' ); ?>
 				</h2>
 				<div class="inside">
-					<?php echo Components::render_recent_logs( $logs ); ?>
+					<?php echo wp_kses_post( Components::render_recent_logs( $logs ) ); ?>
 				</div>
 			</div>
 			
@@ -414,7 +428,7 @@ class Admin {
 						</div>
 					</div>
 					
-					<?php echo Components::render_reset_buttons(); ?>
+					<?php echo wp_kses_post( Components::render_reset_buttons() ); ?>
 				</div>
 			</div>
 		</div>

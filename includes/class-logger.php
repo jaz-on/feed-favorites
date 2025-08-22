@@ -6,72 +6,89 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Log and statistics management
+ * Log and statistics management.
  */
 class Logger {
 
 	/**
-	 * Maximum number of logs to keep
+	 * Maximum number of logs to keep.
+	 *
+	 * @var int
 	 */
 	const MAX_LOGS = 100;
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	public function __construct() {
-		// No initialization needed
+		// No initialization needed.
 	}
 
 	/**
-	 * Error log
+	 * Error log.
+	 *
+	 * @param string $message The error message to log.
+	 * @return void
 	 */
 	public function log_error( $message ) {
 		$this->log( 'ERROR', $message );
 	}
 
 	/**
-	 * Success log
+	 * Success log.
+	 *
+	 * @param string $message The success message to log.
+	 * @return void
 	 */
 	public function log_success( $message ) {
 		$this->log( 'SUCCESS', $message );
 	}
 
 	/**
-	 * Information log
+	 * Information log.
+	 *
+	 * @param string $message The info message to log.
+	 * @return void
 	 */
 	public function log_info( $message ) {
 		$this->log( 'INFO', $message );
 	}
 
 	/**
-	 * Main logging system
+	 * Main logging system.
+	 *
+	 * @param string $level The log level.
+	 * @param string $message The message to log.
+	 * @return void
 	 */
 	public function log( $level, $message ) {
 		$logs = get_option( 'feed_favorites_logs', array() );
 
 		$log_entry = array(
-			'timestamp' => time(), // Unix timestamp for compatibility
+			'timestamp' => time(), // Unix timestamp for compatibility.
 			'level'     => sanitize_text_field( $level ),
 			'message'   => sanitize_text_field( $message ),
 		);
 
-		// Add log at beginning of array
+		// Add log at beginning of array.
 		array_unshift( $logs, $log_entry );
 
-		// Limit number of logs
+		// Limit number of logs.
 		$logs = array_slice( $logs, 0, self::MAX_LOGS );
 
 		update_option( 'feed_favorites_logs', $logs );
 	}
 
 	/**
-	 * Get statistics
+	 * Get statistics.
+	 *
+	 * @return array Statistics array.
 	 */
 	public function get_stats() {
 		$stats = array(
@@ -85,7 +102,9 @@ class Logger {
 	}
 
 	/**
-	 * Get total number of posts
+	 * Get total number of posts.
+	 *
+	 * @return int Number of published posts.
 	 */
 	private function get_total_posts() {
 		$count = wp_count_posts( 'favorite' );
@@ -97,7 +116,10 @@ class Logger {
 	}
 
 	/**
-	 * Get recent logs
+	 * Get recent logs.
+	 *
+	 * @param int $limit The number of logs to retrieve.
+	 * @return array Recent logs.
 	 */
 	public function get_recent_logs( $limit = 10 ) {
 		$logs = get_option( 'feed_favorites_logs', array() );
@@ -105,7 +127,9 @@ class Logger {
 	}
 
 	/**
-	 * Clean up old logs
+	 * Clean up old logs.
+	 *
+	 * @return void
 	 */
 	public function cleanup_old_logs() {
 		$logs = get_option( 'feed_favorites_logs', array() );
@@ -117,14 +141,18 @@ class Logger {
 	}
 
 	/**
-	 * Delete all logs
+	 * Delete all logs.
+	 *
+	 * @return void
 	 */
 	public function clear_logs() {
 		delete_option( 'feed_favorites_logs' );
 	}
 
 	/**
-	 * Export logs
+	 * Export logs.
+	 *
+	 * @return array Export data.
 	 */
 	public function export_logs() {
 		$logs = get_option( 'feed_favorites_logs', array() );
@@ -139,20 +167,26 @@ class Logger {
 	}
 
 	/**
-	 * Format timestamp for display
+	 * Format timestamp for display.
+	 *
+	 * @param mixed $timestamp The timestamp to format.
+	 * @return string Formatted timestamp.
 	 */
 	public function format_timestamp( $timestamp ) {
 		if ( is_string( $timestamp ) ) {
 			return $timestamp;
 		} elseif ( is_numeric( $timestamp ) ) {
-			return date( 'Y-m-d H:i:s', $timestamp );
+			return gmdate( 'Y-m-d H:i:s', $timestamp );
 		} else {
 			return 'Invalid timestamp';
 		}
 	}
 
 	/**
-	 * Reset statistics and/or logs
+	 * Reset statistics and/or logs.
+	 *
+	 * @param string $reset_type The type of reset to perform.
+	 * @return string|WP_Error Success message or error.
 	 */
 	public function reset_stats( $reset_type = 'all' ) {
 		switch ( $reset_type ) {
@@ -180,15 +214,17 @@ class Logger {
 	}
 
 	/**
-	 * Reset statistics
+	 * Reset statistics.
+	 *
+	 * @return void
 	 */
 	private function reset_statistics() {
-		// Reset counters
+		// Reset counters.
 		update_option( 'feed_favorites_sync_count', 0 );
 		update_option( 'feed_favorites_error_count', 0 );
 		update_option( 'feed_favorites_last_sync', '' );
 
-		// Note: We don't delete existing posts, only statistics
-		// If user wants to delete posts, they can do it manually
+		// Note: We don't delete existing posts, only statistics.
+		// If user wants to delete posts, they can do it manually.
 	}
 }

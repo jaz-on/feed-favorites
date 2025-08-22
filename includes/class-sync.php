@@ -6,28 +6,30 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Data synchronization management
+ * Data synchronization management.
  */
 class Sync {
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	public function __construct() {
 		add_filter( 'cron_schedules', array( $this, 'add_cron_intervals' ) );
 	}
 
 	/**
-	 * Manual synchronization
+	 * Manual synchronization.
+	 *
+	 * @return string|WP_Error Success message or error.
 	 */
 	public function manual_sync() {
-		// Security check - verify user capabilities
+		// Security check - verify user capabilities.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error( 'insufficient_permissions', __( 'Insufficient permissions to perform manual synchronization', 'feed-favorites' ) );
 		}
@@ -47,12 +49,15 @@ class Sync {
 		} else {
 			$this->log_success( 'Manual synchronization successful: ' . $result . ' items processed' );
 			$this->update_stats( true, $result );
+			/* translators: %d: Number of items processed */
 			return sprintf( __( 'Synchronization successful: %d items processed', 'feed-favorites' ), $result );
 		}
 	}
 
 	/**
-	 * Automatic synchronization via cron
+	 * Automatic synchronization via cron.
+	 *
+	 * @return void
 	 */
 	public function automatic_sync() {
 		$feed_url = Config::get( 'feed_url' );
@@ -74,10 +79,13 @@ class Sync {
 	}
 
 	/**
-	 * Feed synchronization
+	 * Feed synchronization.
+	 *
+	 * @param string $feed_url The feed URL to sync.
+	 * @return int|WP_Error Number of items processed or error.
 	 */
 	private function sync_feed( $feed_url ) {
-		// Get feed content
+		// Get feed content.
 		$response = Http::fetch_feed( $feed_url, 30 );
 
 		if ( is_wp_error( $response ) ) {
@@ -90,7 +98,7 @@ class Sync {
 			return new WP_Error( 'empty_feed', __( 'Feed is empty', 'feed-favorites' ) );
 		}
 
-		// Parse XML with validation
+		// Parse XML with validation.
 		$xml = Http::validate_xml( $body );
 
 		if ( is_wp_error( $xml ) ) {
@@ -102,10 +110,10 @@ class Sync {
 
 		$items = $xml->channel->item;
 
-		// Process entries with limitation
+		// Process entries with limitation.
 		foreach ( $items as $item ) {
-			// If max_items = 0, process all items
-			// Otherwise, respect limitation
+			// If max_items = 0, process all items.
+			// Otherwise, respect limitation.
 			if ( $max_items > 0 && $count >= $max_items ) {
 				break;
 			}
@@ -120,36 +128,42 @@ class Sync {
 	}
 
 	/**
-	 * Process a feed entry
+	 * Process a feed entry.
+	 *
+	 * @param SimpleXMLElement $entry The RSS entry to process.
+	 * @return bool True if processed successfully, false otherwise.
 	 */
 	private function process_entry( $entry ) {
-		// Extract and validate data
+		// Extract and validate data.
 		$data = $this->extract_entry_data( $entry );
 
 		if ( is_wp_error( $data ) ) {
 			return false;
 		}
 
-		// Check if article already exists
+		// Check if article already exists.
 		if ( $this->entry_exists( $data['link'] ) ) {
 			return false;
 		}
 
-		// Create post
+		// Create post.
 		$post_id = $this->create_post( $data );
 
 		if ( is_wp_error( $post_id ) ) {
 			return false;
 		}
 
-		// Update ACF fields
+		// Update ACF fields.
 		$this->update_acf_fields( $post_id, $data );
 
 		return true;
 	}
 
 	/**
-	 * Extract RSS entry data
+	 * Extract RSS entry data.
+	 *
+	 * @param SimpleXMLElement $item The RSS item element.
+	 * @return array|WP_Error Extracted data or error.
 	 */
 	private function extract_entry_data( $item ) {
 		$data = array(
@@ -159,10 +173,10 @@ class Sync {
 			'published'    => sanitize_text_field( (string) $item->pubDate ),
 			'author'       => sanitize_text_field( (string) $item->author ),
 			'source_title' => sanitize_text_field( (string) $item->source ),
-			'source_url'   => esc_url_raw( (string) $item->link ), // RSS doesn't have separate source
+			'source_url'   => esc_url_raw( (string) $item->link ), // RSS doesn't have separate source.
 		);
 
-		// Validate required data
+		// Validate required data.
 		if ( empty( $data['title'] ) || empty( $data['link'] ) ) {
 			return new WP_Error( 'invalid_entry', __( 'Invalid entry data', 'feed-favorites' ) );
 		}
@@ -171,7 +185,10 @@ class Sync {
 	}
 
 	/**
-	 * Check if entry exists
+	 * Check if entry exists.
+	 *
+	 * @param string $link The link to check.
+	 * @return bool True if entry exists, false otherwise.
 	 */
 	private function entry_exists( $link ) {
 		$existing_post = get_posts(
@@ -196,7 +213,10 @@ class Sync {
 	}
 
 	/**
-	 * Create a post
+	 * Create a post.
+	 *
+	 * @param array $data The post data.
+	 * @return int|WP_Error The post ID or error.
 	 */
 	private function create_post( $data ) {
 		$post_data = array(
@@ -212,7 +232,11 @@ class Sync {
 	}
 
 	/**
-	 * Update ACF fields
+	 * Update ACF fields.
+	 *
+	 * @param int   $post_id The post ID.
+	 * @param array $data The data to update.
+	 * @return void
 	 */
 	private function update_acf_fields( $post_id, $data ) {
 		if ( ! function_exists( 'update_field' ) ) {
@@ -233,13 +257,17 @@ class Sync {
 	}
 
 	/**
-	 * Add custom cron intervals
+	 * Add custom cron intervals.
+	 *
+	 * @param array $schedules The existing cron schedules.
+	 * @return array Modified schedules.
 	 */
 	public function add_cron_intervals( $schedules ) {
 		$interval = intval( Config::get( 'sync_interval', 3600 ) );
 
 		$schedules['feed_favorites_interval'] = array(
 			'interval' => $interval,
+			/* translators: %d: Number of seconds */
 			'display'  => sprintf( __( 'Every %d seconds', 'feed-favorites' ), $interval ),
 		);
 
@@ -247,27 +275,36 @@ class Sync {
 	}
 
 	/**
-	 * Log error
+	 * Log error.
+	 *
+	 * @param string $message The error message.
+	 * @return void
 	 */
 	private function log_error( $message ) {
-		// Create logger instance when needed
+		// Create logger instance when needed.
 		$logger = new Logger();
 		$logger->log( 'ERROR', $message );
 	}
 
 	/**
-	 * Log success
+	 * Log success.
+	 *
+	 * @param string $message The success message.
+	 * @return void
 	 */
 	private function log_success( $message ) {
-		// Create logger instance when needed
+		// Create logger instance when needed.
 		$logger = new Logger();
 		$logger->log( 'SUCCESS', $message );
 	}
 
 	/**
-	 * Update statistics
+	 * Update statistics.
+	 *
+	 * @param bool $success True for success, false for failure.
+	 * @return void
 	 */
-	private function update_stats( $success = true, $count = 0 ) {
+	private function update_stats( $success = true ) {
 		Config::set( 'last_sync', current_time( 'mysql' ) );
 
 		if ( $success ) {

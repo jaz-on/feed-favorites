@@ -6,18 +6,18 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Centralized AJAX request management
+ * Centralized AJAX request management.
  */
 class Ajax {
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	public function __construct() {
 		add_action( 'wp_ajax_feed_favorites_sync', array( $this, 'handle_sync' ) );
@@ -27,41 +27,46 @@ class Ajax {
 	}
 
 	/**
-	 * Common security verification
+	 * Common security verification.
+	 *
+	 * @param string $action The action name for nonce verification.
+	 * @return void
 	 */
 	private function verify_request( $action = 'feed_favorites_sync' ) {
-		// Nonce & referer verification
+		// Nonce & referer verification.
 		if ( ! isset( $_POST['nonce'] ) ) {
 			wp_die( esc_html__( 'Missing nonce', 'feed-favorites' ) );
 		}
 		check_ajax_referer( $action, 'nonce' );
 
-		// Check permissions
+		// Check permissions.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Insufficient permissions', 'feed-favorites' ) );
 		}
 
-		// Rate limiting check
+		// Rate limiting check.
 		if ( ! $this->check_rate_limit() ) {
 			wp_die( esc_html__( 'Rate limit exceeded. Please wait before trying again.', 'feed-favorites' ) );
 		}
 	}
 
 	/**
-	 * Rate limiting implementation
+	 * Rate limiting implementation.
+	 *
+	 * @return bool True if within rate limit, false otherwise.
 	 */
 	private function check_rate_limit() {
 		$user_id = get_current_user_id();
 		$action  = current_action();
 		$key     = "feed_favorites_rate_limit_{$user_id}_{$action}";
 
-		// Allow 5 requests per minute per user per action
+		// Allow 5 requests per minute per user per action.
 		$limit  = 5;
-		$window = 60; // seconds
+		$window = 60; // seconds.
 
 		$current_count = get_transient( $key );
 
-		if ( $current_count === false ) {
+		if ( false === $current_count ) {
 			set_transient( $key, 1, $window );
 			return true;
 		}
@@ -75,7 +80,9 @@ class Ajax {
 	}
 
 	/**
-	 * Handle AJAX synchronization
+	 * Handle AJAX synchronization.
+	 *
+	 * @return void
 	 */
 	public function handle_sync() {
 		$this->verify_request( 'feed_favorites_sync' );
@@ -91,13 +98,15 @@ class Ajax {
 	}
 
 	/**
-	 * Handle AJAX URL test
+	 * Handle AJAX URL test.
+	 *
+	 * @return void
 	 */
 	public function handle_test_url() {
 		$this->verify_request( 'feed_favorites_test_url' );
 
-		// Sanitize input data
-		$url = isset( $_POST['url'] ) ? sanitize_url( $_POST['url'] ) : '';
+		// Sanitize input data.
+		$url = isset( $_POST['url'] ) ? sanitize_url( wp_unslash( $_POST['url'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 		if ( empty( $url ) ) {
 			wp_send_json_error( array( 'message' => esc_html__( 'Empty URL', 'feed-favorites' ) ) );
@@ -113,13 +122,15 @@ class Ajax {
 	}
 
 	/**
-	 * Handle AJAX preview
+	 * Handle AJAX preview.
+	 *
+	 * @return void
 	 */
 	public function handle_preview() {
 		$this->verify_request( 'feed_favorites_preview' );
 
-		// Sanitize input data
-		$url = isset( $_POST['url'] ) ? sanitize_url( $_POST['url'] ) : '';
+		// Sanitize input data.
+		$url = isset( $_POST['url'] ) ? sanitize_url( wp_unslash( $_POST['url'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 		if ( empty( $url ) ) {
 			wp_send_json_error( array( 'message' => esc_html__( 'Empty URL', 'feed-favorites' ) ) );
@@ -135,7 +146,10 @@ class Ajax {
 	}
 
 	/**
-	 * Generate feed data preview
+	 * Generate feed data preview.
+	 *
+	 * @param string $url The feed URL to preview.
+	 * @return string|WP_Error HTML preview or error.
 	 */
 	private function get_feed_preview( $url ) {
 		$body = Http::test_url( $url );
@@ -153,7 +167,7 @@ class Ajax {
 		$items       = $xml->channel->item;
 		$total_count = count( $xml->channel->item );
 
-		// Generate HTML preview
+		// Generate HTML preview.
 		$html        = '<div class="rss-preview-items">';
 		$count       = 0;
 		$max_preview = 3;
@@ -174,7 +188,7 @@ class Ajax {
 				$html .= 'By ' . esc_html( $author ) . ' • ';
 			}
 			if ( $published ) {
-				$html .= 'Published on ' . date( 'd/m/Y', strtotime( $published ) );
+				$html .= 'Published on ' . gmdate( 'd/m/Y', strtotime( $published ) );
 			}
 			$html .= '</div>';
 			$html .= '</div>';
@@ -192,13 +206,15 @@ class Ajax {
 	}
 
 	/**
-	 * Handle AJAX statistics reset
+	 * Handle AJAX statistics reset.
+	 *
+	 * @return void
 	 */
 	public function handle_reset_stats() {
 		$this->verify_request( 'feed_favorites_reset_stats' );
 
-		// Sanitize input data
-		$reset_type = isset( $_POST['reset_type'] ) ? sanitize_text_field( $_POST['reset_type'] ) : '';
+		// Sanitize input data.
+		$reset_type = isset( $_POST['reset_type'] ) ? sanitize_text_field( wp_unslash( $_POST['reset_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 		$logger = new Logger();
 		$result = $logger->reset_stats( $reset_type );

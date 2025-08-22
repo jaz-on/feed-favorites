@@ -6,28 +6,33 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Centralized validation management
+ * Centralized validation management.
  */
 class Validator {
 
 	/**
-	 * Validation rules
+	 * Validation rules.
+	 *
+	 * @var array
 	 */
 	private static $rules = array(
-		'feed_url'      => array( 'required', 'url', 'feed_format' ), // Changed from feedbin_format
+		'feed_url'      => array( 'required', 'url', 'feed_format' ), // Changed from feedbin_format.
 		'auto_sync'     => array( 'boolean' ),
 		'sync_interval' => array( 'required', 'integer', 'valid_interval' ),
 		'max_items'     => array( 'integer', 'min:0', 'max:200' ),
 	);
 
 	/**
-	 * Validate feed URL
+	 * Validate feed URL.
+	 *
+	 * @param string $url The URL to validate.
+	 * @return string|WP_Error Validated URL or error.
 	 */
 	public static function validate_feed_url( $url ) {
 		if ( empty( $url ) ) {
@@ -46,30 +51,36 @@ class Validator {
 	}
 
 	/**
-	 * Validate RSS feed URL format (generic)
+	 * Validate RSS feed URL format (generic).
+	 *
+	 * @param string $url The URL to validate.
+	 * @return bool True if valid, false otherwise.
 	 */
 	public static function is_valid_feed_url( $url ) {
-		$parsed = parse_url( $url );
+		$parsed = wp_parse_url( $url );
 
 		if ( ! $parsed || ! isset( $parsed['host'] ) || ! isset( $parsed['path'] ) ) {
 			return false;
 		}
 
-		// Enhanced security checks
+		// Enhanced security checks.
 		if ( isset( $parsed['scheme'] ) ) {
-			// Only allow HTTPS and HTTP (with warning)
-			if ( ! in_array( $parsed['scheme'], array( 'https', 'http' ) ) ) {
+			// Only allow HTTPS and HTTP (with warning).
+			if ( ! in_array( $parsed['scheme'], array( 'https', 'http' ), true ) ) {
 				return false;
 			}
 
-			// Prefer HTTPS for security
-			if ( $parsed['scheme'] !== 'https' ) {
-				// Log warning for non-HTTPS URLs
-				error_log( "Feed Favorites: Non-HTTPS URL detected: {$url}" );
+			// Prefer HTTPS for security.
+			if ( 'https' !== $parsed['scheme'] ) {
+							// Log warning for non-HTTPS URLs using WordPress logging.
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					$logger = new \FeedFavorites\Logger();
+					$logger->log( 'WARNING', "Non-HTTPS URL detected: {$url}" );
+				}
 			}
 		}
 
-		// Block potentially dangerous URLs
+		// Block potentially dangerous URLs.
 		$blocked_patterns = array(
 			'javascript:',
 			'data:',
@@ -82,13 +93,13 @@ class Validator {
 		);
 
 		foreach ( $blocked_patterns as $pattern ) {
-			if ( stripos( $url, $pattern ) !== false ) {
+			if ( false !== stripos( $url, $pattern ) ) {
 				return false;
 			}
 		}
 
-		// Check that it's a valid RSS feed URL
-		// Accept common RSS feed patterns
+		// Check that it's a valid RSS feed URL.
+		// Accept common RSS feed patterns.
 		$valid_patterns = array(
 			'/feed/',
 			'/rss/',
@@ -105,7 +116,7 @@ class Validator {
 		$has_valid_pattern = false;
 
 		foreach ( $valid_patterns as $pattern ) {
-			if ( strpos( $path, $pattern ) !== false ) {
+			if ( false !== strpos( $path, $pattern ) ) {
 				$has_valid_pattern = true;
 				break;
 			}
@@ -115,7 +126,7 @@ class Validator {
 			return false;
 		}
 
-		// Additional security: check for reasonable URL length
+		// Additional security: check for reasonable URL length.
 		if ( strlen( $url ) > 500 ) {
 			return false;
 		}
@@ -124,14 +135,20 @@ class Validator {
 	}
 
 	/**
-	 * Validate automatic synchronization
+	 * Validate automatic synchronization.
+	 *
+	 * @param mixed $value The value to validate.
+	 * @return int Validated value (0 or 1).
 	 */
 	public static function validate_auto_sync( $value ) {
-		return in_array( $value, array( 0, 1 ) ) ? $value : 0;
+		return in_array( $value, array( 0, 1 ), true ) ? $value : 0;
 	}
 
 	/**
-	 * Validate synchronization interval
+	 * Validate synchronization interval.
+	 *
+	 * @param mixed $value The value to validate.
+	 * @return int Validated interval value.
 	 */
 	public static function validate_sync_interval( $value ) {
 		$value = intval( $value );
@@ -139,7 +156,10 @@ class Validator {
 	}
 
 	/**
-	 * Validate maximum number of items
+	 * Validate maximum number of items.
+	 *
+	 * @param mixed $value The value to validate.
+	 * @return int Validated max items value.
 	 */
 	public static function validate_max_items( $value ) {
 		if ( empty( $value ) ) {
@@ -160,7 +180,10 @@ class Validator {
 	}
 
 	/**
-	 * Complete validation of a data set
+	 * Complete validation of a data set.
+	 *
+	 * @param array $data The data to validate.
+	 * @return array|WP_Error Validated data or error.
 	 */
 	public static function validate_data( $data ) {
 		$errors    = array();
@@ -185,7 +208,11 @@ class Validator {
 	}
 
 	/**
-	 * Validate a specific field
+	 * Validate a specific field.
+	 *
+	 * @param string $field The field name.
+	 * @param mixed  $value The value to validate.
+	 * @return mixed|WP_Error Validated value or error.
 	 */
 	private static function validate_field( $field, $value ) {
 		switch ( $field ) {

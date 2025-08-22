@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<ruleset name="Feed Favorites Plugin Coding Standards">
+	<description>Custom coding standards for Feed Favorites plugin</description>
+
+	<!-- Use WordPress Coding Standards -->
+	<rule ref="WordPress"/>
+
+	<!-- Files to check -->
+	<file>.</file>
+
+	<!-- Exclude vendor directory -->
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/.git/*</exclude-pattern>
+
+	<!-- Ignore RSS standard properties like $pubDate -->
+	<rule ref="WordPress.NamingConventions.ValidVariableName.PropertyNotSnakeCase">
+		<exclude-pattern>*</exclude-pattern>
+	</rule>
+
+	<!-- Allow file_get_contents for local files -->
+	<rule ref="WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents">
+		<exclude-pattern>*/includes/class-import.php</exclude-pattern>
+	</rule>
+
+	<!-- Allow meta_query when properly optimized -->
+	<rule ref="WordPress.DB.SlowDBQuery.slow_db_query_meta_query">
+		<exclude-pattern>*</exclude-pattern>
+	</rule>
+
+	<!-- Allow cron_schedules modification -->
+	<rule ref="WordPress.WP.CronInterval.ChangeDetected">
+		<exclude-pattern>*</exclude-pattern>
+	</rule>
+</ruleset>
