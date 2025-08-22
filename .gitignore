@@ -1,0 +1,91 @@
+# WordPress Plugin .gitignore
+
+# Dependencies
+/vendor/
+/node_modules/
+composer.lock
+package-lock.json
+yarn.lock
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Build and distribution
+/build/
+/dist/
+*.zip
+*.tar.gz
+
+# Assets (garder les assets finaux, ignorer les temporaires)
+assets/*.psd
+assets/*.ai
+assets/*.sketch
+assets/*.tmp
+assets/*.temp
+
+# Logs
+*.log
+/logs/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Cache
+/cache/
+*.cache
+
+# Temporary files
+/tmp/
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# WordPress specific
+wp-config.php
+wp-content/uploads/
+wp-content/cache/
+wp-content/backup-db/
+wp-content/backups/
+wp-content/blogs.dir/
+wp-content/upgrade/
+wp-content/uploads/
+wp-content/mu-plugins/
+wp-content/wp-cache-config.php
+wp-content/plugins/hello.php
+
+# Testing
+/coverage/
+.phpunit.result.cache
+phpunit.xml
+
+# Documentation build
+/docs/_build/
+
+# Local development
+local-config.php
+wp-config-local.php
+
+# Large data files
+starred.json
+*.json.bak 
