@@ -41,9 +41,10 @@ class Http {
 	 */
 	public static function fetch_feed( $url, $timeout = 15 ) {
 		$args = array(
-			'timeout'    => $timeout,
-			'user-agent' => self::$user_agent,
-			'headers'    => self::$default_headers,
+			'timeout'             => $timeout,
+			'user-agent'          => self::$user_agent,
+			'headers'             => self::$default_headers,
+			'limit_response_size' => 1024 * 1024 * 2, // 2MB
 		);
 
 		return wp_remote_get( $url, $args );
@@ -84,9 +85,9 @@ class Http {
 	 * @return SimpleXMLElement|WP_Error Valid XML object or error.
 	 */
 	public static function validate_xml( $body ) {
-		// Validate XML format.
+		// Validate XML format (block external entity loader / network).
 		libxml_use_internal_errors( true );
-		$xml = simplexml_load_string( $body );
+		$xml = simplexml_load_string( $body, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING );
 		libxml_clear_errors();
 
 		if ( ! $xml ) {

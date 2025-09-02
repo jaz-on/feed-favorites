@@ -287,11 +287,11 @@ class Admin {
 								</th>
 								<td>
 									<input type="url" 
-											id="rss_feed_url" 
-											name="feed_favorites_options[rss_feed_url]" 
-											value="<?php echo esc_attr( get_option( 'feed_favorites_feed_url' ) ); ?>" 
-											class="regular-text"
-											placeholder="https://example.com/feed/starred.xml" />
+										id="rss_feed_url" 
+										name="feed_favorites_feed_url" 
+										value="<?php echo esc_attr( get_option( 'feed_favorites_feed_url' ) ); ?>" 
+										class="regular-text"
+										placeholder="https://example.com/feed/starred.xml" />
 									<p class="description"><?php esc_html_e( 'Your RSS feed URL with starred/favorite items', 'feed-favorites' ); ?></p>
 								</td>
 							</tr>
@@ -301,11 +301,13 @@ class Admin {
 									<label for="sync_frequency"><?php esc_html_e( 'Sync Frequency', 'feed-favorites' ); ?></label>
 								</th>
 								<td>
-									<select id="sync_frequency" name="feed_favorites_options[sync_frequency]">
-										<option value="hourly" <?php selected( get_option( 'feed_favorites_sync_frequency', 'daily' ), 'hourly' ); ?>><?php esc_html_e( 'Every hour', 'feed-favorites' ); ?></option>
-										<option value="twicedaily" <?php selected( get_option( 'feed_favorites_sync_frequency', 'daily' ), 'twicedaily' ); ?>><?php esc_html_e( 'Twice daily', 'feed-favorites' ); ?></option>
-										<option value="daily" <?php selected( get_option( 'feed_favorites_sync_frequency', 'daily' ), 'daily' ); ?>><?php esc_html_e( 'Daily', 'feed-favorites' ); ?></option>
-										<option value="weekly" <?php selected( get_option( 'feed_favorites_sync_frequency', 'daily' ), 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'feed-favorites' ); ?></option>
+									<select id="sync_frequency" name="feed_favorites_sync_interval">
+										<option value="900" <?php selected( get_option( 'feed_favorites_sync_interval', '7200' ), '900' ); ?>><?php esc_html_e( 'Every 15 minutes', 'feed-favorites' ); ?></option>
+										<option value="1800" <?php selected( get_option( 'feed_favorites_sync_interval', '7200' ), '1800' ); ?>><?php esc_html_e( 'Every 30 minutes', 'feed-favorites' ); ?></option>
+										<option value="3600" <?php selected( get_option( 'feed_favorites_sync_interval', '7200' ), '3600' ); ?>><?php esc_html_e( 'Every hour', 'feed-favorites' ); ?></option>
+										<option value="7200" <?php selected( get_option( 'feed_favorites_sync_interval', '7200' ), '7200' ); ?>><?php esc_html_e( 'Every 2 hours', 'feed-favorites' ); ?></option>
+										<option value="14400" <?php selected( get_option( 'feed_favorites_sync_interval', '7200' ), '14400' ); ?>><?php esc_html_e( 'Every 4 hours', 'feed-favorites' ); ?></option>
+										<option value="86400" <?php selected( get_option( 'feed_favorites_sync_interval', '7200' ), '86400' ); ?>><?php esc_html_e( 'Daily', 'feed-favorites' ); ?></option>
 									</select>
 									<p class="description"><?php esc_html_e( 'How often to check for new starred items', 'feed-favorites' ); ?></p>
 								</td>
@@ -317,12 +319,12 @@ class Admin {
 								</th>
 								<td>
 									<input type="number" 
-											id="max_items" 
-											name="feed_favorites_options[max_items]" 
-											value="<?php echo esc_attr( get_option( 'feed_favorites_max_items', '50' ) ); ?>" 
-											class="small-text" 
-											min="1" 
-											max="100" />
+										id="max_items" 
+										name="feed_favorites_max_items" 
+										value="<?php echo esc_attr( get_option( 'feed_favorites_max_items', '50' ) ); ?>" 
+										class="small-text" 
+										min="1" 
+										max="100" />
 									<p class="description"><?php esc_html_e( 'Maximum number of items to import per synchronization', 'feed-favorites' ); ?></p>
 								</td>
 							</tr>
@@ -333,10 +335,10 @@ class Admin {
 								</th>
 								<td>
 									<input type="checkbox" 
-											id="auto_publish" 
-											name="feed_favorites_options[auto_publish]" 
-											value="1" 
-											<?php checked( get_option( 'feed_favorites_auto_publish', false ), true ); ?> />
+										id="auto_publish" 
+										name="feed_favorites_auto_sync" 
+										value="1" 
+										<?php checked( get_option( 'feed_favorites_auto_sync', '1' ), '1' ); ?> />
 									<label for="auto_publish"><?php esc_html_e( 'Automatically publish imported favorites', 'feed-favorites' ); ?></label>
 									<p class="description"><?php esc_html_e( 'If unchecked, items will be saved as drafts', 'feed-favorites' ); ?></p>
 								</td>

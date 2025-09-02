@@ -102,9 +102,22 @@ class FeedFavorites {
 		// Cron job for automatic synchronization.
 		add_action( 'feed_favorites_cron_sync', array( $this, 'cron_sync' ) );
 
-		// Activation hook.
+		// Activation/Deactivation hooks.
 		register_activation_hook( FEED_FAVORITES_PLUGIN_FILE, array( $this, 'activate' ) );
 		register_deactivation_hook( FEED_FAVORITES_PLUGIN_FILE, array( $this, 'deactivate' ) );
+
+		// Reschedule cron when interval option is updated.
+		add_action(
+			'update_option_feed_favorites_sync_interval',
+			function () {
+				wp_clear_scheduled_hook( 'feed_favorites_cron_sync' );
+				if ( ! wp_next_scheduled( 'feed_favorites_cron_sync' ) ) {
+					wp_schedule_event( time(), 'feed_favorites_interval', 'feed_favorites_cron_sync' );
+				}
+			},
+			10,
+			0
+		);
 	}
 
 	/**
@@ -229,7 +242,7 @@ class FeedFavorites {
 	 */
 	private function schedule_cron() {
 		if ( ! wp_next_scheduled( 'feed_favorites_cron_sync' ) ) {
-			wp_schedule_event( time(), 'hourly', 'feed_favorites_cron_sync' );
+			wp_schedule_event( time(), 'feed_favorites_interval', 'feed_favorites_cron_sync' );
 		}
 	}
 

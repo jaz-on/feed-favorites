@@ -1,8 +1,8 @@
 === Feed Favorites ===
 Contributors: jasonrouet
-Tags: rss, feed, favorites, bookmarks, synchronization, import, acf, content-curation
+Tags: rss, synchronization, import, bookmarks, acf
 Requires at least: 5.0
-Tested up to: 6.5
+Tested up to: 6.9
 Requires PHP: 8.2
 Stable tag: 1.0.0
 License: GPLv2 or later
@@ -55,6 +55,34 @@ Yes. The plugin registers a `favorite` post type. You can create templates, use 
 = Is the plugin secure? =
 
 Nonce verification, capability checks, and data sanitization are implemented for all operations.
+
+== Screenshots ==
+1. Setup screen
+2. Import screen
+3. Logs and statistics
+
+== Shortcode ==
+Use the shortcode below to list recent favorites:
+
+[feed_favorites limit="10" order="DESC"]
+
+Parameters:
+- limit: number of items (default 10)
+- order: ASC|DESC (default DESC)
+
+== Cron ==
+The plugin schedules a periodic synchronization. The frequency can be adjusted in Settings. Custom intervals: 15 minutes, 30 minutes, 1 hour, 2 hours (default), 4 hours, daily.
+
+== Privacy ==
+This plugin does not send data to third-party services. It stores:
+- Options under the `feed_favorites_*` keys
+- A capped in-database log (maximum 100 entries)
+- Imported posts in the `favorite` post type
+
+Upon uninstall, options, transients, logs, and `favorite` posts are removed.
+
+== Accessibility ==
+The admin UI uses native WordPress components (buttons, notices, tables) and supports keyboard navigation. No front-end scripts are injected by the plugin.
 
 == Support ==
 

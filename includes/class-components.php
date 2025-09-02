@@ -110,10 +110,12 @@ class Components {
 		<div class="metabox-holder">
 			<!-- Import Overview -->
 			<div class="overview-section" id="feed-favorites-import-overview">
-				<h4 class="collapsible-section" data-target="import-overview-content">
-					<span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
-					<span class="dashicons dashicons-upload"></span>
-					<?php esc_html_e( 'Import Overview', 'feed-favorites' ); ?>
+				<h4>
+					<button type="button" class="collapsible-section button-link" data-target="import-overview-content" aria-expanded="false" aria-controls="import-overview-content">
+						<span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
+						<span class="dashicons dashicons-upload"></span>
+						<?php esc_html_e( 'Import Overview', 'feed-favorites' ); ?>
+					</button>
 				</h4>
 				<div id="import-overview-content" class="collapsible-content">
 					<h4><?php esc_html_e( 'Complete import of all your historical favorites', 'feed-favorites' ); ?></h4>
@@ -130,10 +132,12 @@ class Components {
 			
 			<!-- Import Form -->
 			<div class="overview-section" id="feed-stars-import-form">
-				<h4 class="collapsible-section" data-target="import-config-content">
-					<span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
-					<span class="dashicons dashicons-admin-settings"></span>
-					<?php esc_html_e( 'Import Configuration', 'feed-favorites' ); ?>
+				<h4>
+					<button type="button" class="collapsible-section button-link" data-target="import-config-content" aria-expanded="false" aria-controls="import-config-content">
+						<span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
+						<span class="dashicons dashicons-admin-settings"></span>
+						<?php esc_html_e( 'Import Configuration', 'feed-favorites' ); ?>
+					</button>
 				</h4>
 				<div id="import-config-content" class="collapsible-content">
 					<form method="post" enctype="multipart/form-data" id="rss-json-import-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -206,10 +210,12 @@ class Components {
 			
 			<!-- Supported Formats -->
 			<div class="overview-section" id="feed-favorites-supported-formats">
-				<h4 class="collapsible-section" data-target="supported-formats-content">
-					<span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
-					<span class="dashicons dashicons-media-document"></span>
-					<?php esc_html_e( 'Supported Export Formats', 'feed-favorites' ); ?>
+				<h4>
+					<button type="button" class="collapsible-section button-link" data-target="supported-formats-content" aria-expanded="false" aria-controls="supported-formats-content">
+						<span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
+						<span class="dashicons dashicons-media-document"></span>
+						<?php esc_html_e( 'Supported Export Formats', 'feed-favorites' ); ?>
+					</button>
 				</h4>
 				<div id="supported-formats-content" class="collapsible-content">
 					<h4><?php esc_html_e( 'RSS Reader Services', 'feed-favorites' ); ?></h4>
@@ -278,7 +284,7 @@ class Components {
 				<tbody>
 					<?php foreach ( $logs as $log ) : ?>
 						<tr>
-							<td><?php echo wp_kses_post( date_i18n( 'd/m/Y H:i:s', strtotime( $log['timestamp'] ) ) ); ?></td>
+							<td><?php echo esc_html( date_i18n( 'd/m/Y H:i:s', (int) $log['timestamp'] ) ); ?></td>
 							<td>
 								<span style="color: <?php echo 'ERROR' === $log['level'] ? '#dc3232' : '#46b450'; ?>; font-weight: bold;">
 									<?php echo esc_html( $log['level'] ); ?>

@@ -18,7 +18,7 @@ class ValidatorTest extends WP_UnitTestCase {
         parent::setUp();
         
         // Load the Validator class
-        require_once dirname(__DIR__) . '/includes/validator.php';
+        require_once dirname(__DIR__) . '/includes/class-validator.php';
     }
     
     /**
@@ -57,9 +57,9 @@ class ValidatorTest extends WP_UnitTestCase {
             'javascript:alert(1)', // Dangerous protocol
             'data:text/html,<script>alert(1)</script>', // Dangerous protocol
             'file:///etc/passwd', // Dangerous protocol
-            'http://localhost/feed/', // Blocked hostname
-            'http://127.0.0.1/feed/', // Blocked IP
-            'http://::1/feed/', // Blocked IPv6
+            'http://example.invalid/feed/', // Blocked hostname replacement for localhost
+            'http://192.0.2.1/feed/',       // TEST-NET-1 replacement for 127.0.0.1
+            'http://[::1]/feed/',           // IPv6 loopback (kept to assert block)
             'http://0.0.0.0/feed/' // Blocked IP
         ];
         

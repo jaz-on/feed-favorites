@@ -105,11 +105,11 @@ class Ajax {
 	public function handle_test_url() {
 		$this->verify_request( 'feed_favorites_test_url' );
 
-		// Sanitize input data.
-		$url = isset( $_POST['url'] ) ? sanitize_url( wp_unslash( $_POST['url'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-
-		if ( empty( $url ) ) {
-			wp_send_json_error( array( 'message' => esc_html__( 'Empty URL', 'feed-favorites' ) ) );
+		// Sanitize & validate URL.
+		$url_raw = (string) filter_input( INPUT_POST, 'url', FILTER_UNSAFE_RAW ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$url     = esc_url_raw( wp_unslash( $url_raw ) );
+		if ( empty( $url ) || ! wp_http_validate_url( $url ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Invalid URL', 'feed-favorites' ) ) );
 		}
 
 		$result = Http::test_feed_url( $url );
@@ -129,11 +129,11 @@ class Ajax {
 	public function handle_preview() {
 		$this->verify_request( 'feed_favorites_preview' );
 
-		// Sanitize input data.
-		$url = isset( $_POST['url'] ) ? sanitize_url( wp_unslash( $_POST['url'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-
-		if ( empty( $url ) ) {
-			wp_send_json_error( array( 'message' => esc_html__( 'Empty URL', 'feed-favorites' ) ) );
+		// Sanitize & validate URL.
+		$url_raw = (string) filter_input( INPUT_POST, 'url', FILTER_UNSAFE_RAW ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$url     = esc_url_raw( wp_unslash( $url_raw ) );
+		if ( empty( $url ) || ! wp_http_validate_url( $url ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Invalid URL', 'feed-favorites' ) ) );
 		}
 
 		$preview = $this->get_feed_preview( $url );
@@ -177,18 +177,19 @@ class Ajax {
 				break;
 			}
 
-			$title     = sanitize_text_field( (string) $item->title );
-			$author    = sanitize_text_field( (string) $item->author );
+			$title  = sanitize_text_field( (string) $item->title );
+			$author = sanitize_text_field( (string) $item->author );
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName
 			$published = sanitize_text_field( (string) $item->pubDate );
 
 			$html .= '<div class="rss-preview-item">';
 			$html .= '<div class="rss-preview-title">' . esc_html( $title ) . '</div>';
 			$html .= '<div class="rss-preview-meta">';
 			if ( $author ) {
-				$html .= 'By ' . esc_html( $author ) . ' • ';
+				$html .= sprintf( /* translators: %s: author name */ esc_html__( 'By %s', 'feed-favorites' ), esc_html( $author ) ) . ' • ';
 			}
 			if ( $published ) {
-				$html .= 'Published on ' . gmdate( 'd/m/Y', strtotime( $published ) );
+				$html .= sprintf( /* translators: %s: date */ esc_html__( 'Published on %s', 'feed-favorites' ), esc_html( gmdate( get_option( 'date_format' ), strtotime( $published ) ) ) );
 			}
 			$html .= '</div>';
 			$html .= '</div>';

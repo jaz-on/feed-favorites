@@ -6,38 +6,41 @@
  * @since 1.0.0
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Get data
-$feed_url = Config::get( 'feed_url' );
+// Get data.
+$feed_url      = Config::get( 'feed_url' );
 $pending_stars = 0;
 if ( ! empty( $feed_url ) ) {
-	$pending_stars = rand( 5, 25 ); // To be replaced with real counting logic
+	$pending_stars = wp_rand( 5, 25 ); // To be replaced with real counting logic.
 }
 
-// Get statistics
+// Get statistics.
 $stats = array(
 	'total_posts' => wp_count_posts( 'favorite' )->publish,
-	'sync_count' => get_option( 'feed_favorites_sync_count', 0 ),
+	'sync_count'  => get_option( 'feed_favorites_sync_count', 0 ),
 	'error_count' => get_option( 'feed_favorites_error_count', 0 ),
-	'last_sync' => get_option( 'feed_favorites_last_sync', '' ),
+	'last_sync'   => get_option( 'feed_favorites_last_sync', '' ),
 );
 
-// Get recent logs
+// Get recent logs.
 $logger = new Logger();
-$logs = $logger->get_recent_logs( 10 );
+$logs   = $logger->get_recent_logs( 10 );
 
-// Handle import messages
-$import_success = isset( $_GET['import_success'] ) ? urldecode( $_GET['import_success'] ) : '';
-$import_error = isset( $_GET['import_error'] ) ? urldecode( $_GET['import_error'] ) : '';
+// Handle import messages with nonce verification.
+$nonce_param = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+$nonce_ok    = ! empty( $nonce_param ) && wp_verify_nonce( $nonce_param, 'feed_favorites_admin' );
 
-// Get current tab
-$current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'dashboard';
+$import_success = ( $nonce_ok && isset( $_GET['import_success'] ) ) ? sanitize_text_field( wp_unslash( $_GET['import_success'] ) ) : '';
+$import_error   = ( $nonce_ok && isset( $_GET['import_error'] ) ) ? sanitize_text_field( wp_unslash( $_GET['import_error'] ) ) : '';
 
-// $admin is passed from core.php
+// Get current tab (nonce required to switch via GET).
+$current_tab = ( $nonce_ok && isset( $_GET['tab'] ) ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'dashboard';
+
+// $admin is passed from core.php.
 ?>
 
 <div class="wrap">
@@ -63,15 +66,15 @@ $current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'da
 	</div>
 	
 	<nav class="nav-tab-wrapper wp-clearfix">
-		<a href="?post_type=favorite&page=feed-favorites&tab=dashboard" class="nav-tab <?php echo $current_tab === 'dashboard' ? 'nav-tab-active' : ''; ?>">
+		<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'post_type' => 'favorite', 'page' => 'feed-favorites', 'tab' => 'dashboard' ), admin_url( 'edit.php' ) ), 'feed_favorites_admin' ) ); ?>" class="nav-tab <?php echo 'dashboard' === $current_tab ? 'nav-tab-active' : ''; ?>">
 			<span class="dashicons dashicons-admin-home"></span>
 			<?php esc_html_e( 'Dashboard', 'feed-favorites' ); ?>
 		</a>
-		<a href="?post_type=favorite&page=feed-favorites&tab=setup" class="nav-tab <?php echo $current_tab === 'setup' ? 'nav-tab-active' : ''; ?>">
+		<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'post_type' => 'favorite', 'page' => 'feed-favorites', 'tab' => 'setup' ), admin_url( 'edit.php' ) ), 'feed_favorites_admin' ) ); ?>" class="nav-tab <?php echo 'setup' === $current_tab ? 'nav-tab-active' : ''; ?>">
 			<span class="dashicons dashicons-admin-settings"></span>
 			<?php esc_html_e( 'Setup', 'feed-favorites' ); ?>
 		</a>
-		<a href="?post_type=favorite&page=feed-favorites&tab=maintenance" class="nav-tab <?php echo $current_tab === 'maintenance' ? 'nav-tab-active' : ''; ?>">
+		<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'post_type' => 'favorite', 'page' => 'feed-favorites', 'tab' => 'maintenance' ), admin_url( 'edit.php' ) ), 'feed_favorites_admin' ) ); ?>" class="nav-tab <?php echo 'maintenance' === $current_tab ? 'nav-tab-active' : ''; ?>">
 			<span class="dashicons dashicons-admin-tools"></span>
 			<?php esc_html_e( 'Maintenance', 'feed-favorites' ); ?>
 		</a>

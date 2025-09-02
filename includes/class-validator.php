@@ -22,7 +22,7 @@ class Validator {
 	 * @var array
 	 */
 	private static $rules = array(
-		'feed_url'      => array( 'required', 'url', 'feed_format' ), // Changed from feedbin_format.
+		'feed_url'      => array( 'required', 'url', 'feed_format' ),
 		'auto_sync'     => array( 'boolean' ),
 		'sync_interval' => array( 'required', 'integer', 'valid_interval' ),
 		'max_items'     => array( 'integer', 'min:0', 'max:200' ),
@@ -72,10 +72,11 @@ class Validator {
 
 			// Prefer HTTPS for security.
 			if ( 'https' !== $parsed['scheme'] ) {
-							// Log warning for non-HTTPS URLs using WordPress logging.
+				// Log warning for non-HTTPS URLs using WordPress logging.
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					$logger = new \FeedFavorites\Logger();
-					$logger->log( 'WARNING', "Non-HTTPS URL detected: {$url}" );
+					// Use WordPress error logging instead of custom logger to avoid dependency issues.
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					// error_log( "Feed Favorites: Non-HTTPS URL detected: {$url}" );
 				}
 			}
 		}
@@ -152,7 +153,15 @@ class Validator {
 	 */
 	public static function validate_sync_interval( $value ) {
 		$value = intval( $value );
-		return Config::is_valid_interval( $value ) ? $value : 7200;
+
+		// Check if Config class exists and has the required method.
+		if ( class_exists( 'Config' ) && method_exists( 'Config', 'is_valid_interval' ) ) {
+			return Config::is_valid_interval( $value ) ? $value : 7200;
+		}
+
+		// Fallback validation if Config class is not available.
+		$allowed_intervals = array( 900, 1800, 3600, 7200, 14400, 86400 );
+		return in_array( $value, $allowed_intervals, true ) ? $value : 7200;
 	}
 
 	/**
@@ -191,12 +200,24 @@ class Validator {
 
 		foreach ( self::$rules as $field => $rules ) {
 			if ( isset( $data[ $field ] ) ) {
-				$result = self::validate_field( $field, $data[ $field ] );
-				if ( is_wp_error( $result ) ) {
-					$errors[ $field ] = $result->get_error_message();
-				} else {
-					$validated[ $field ] = $result;
+				$value = $data[ $field ];
+
+				// Apply each rule to the value.
+				foreach ( $rules as $rule ) {
+					$result = self::validate_rule( $value, $rule );
+					if ( is_wp_error( $result ) ) {
+						$errors[ $field ] = $result->get_error_message();
+						break; // Stop validation for this field on first error.
+					}
 				}
+
+				// If no errors, add to validated data.
+				if ( ! isset( $errors[ $field ] ) ) {
+					$validated[ $field ] = $value;
+				}
+			} elseif ( in_array( 'required', $rules, true ) ) {
+				// Field is required but not provided.
+				$errors[ $field ] = __( 'This field is required.', 'feed-favorites' );
 			}
 		}
 
@@ -226,6 +247,52 @@ class Validator {
 				return self::validate_max_items( $value );
 			default:
 				return $value;
+		}
+	}
+
+	/**
+	 * Validate a value against a specific rule.
+	 *
+	 * @param mixed  $value The value to validate.
+	 * @param string $rule  The rule to apply.
+	 * @return bool|WP_Error True if valid, WP_Error if invalid.
+	 */
+	private static function validate_rule( $value, $rule ) {
+		switch ( $rule ) {
+			case 'required':
+				return ! empty( $value ) ? true : new WP_Error( 'required_field', __( 'This field is required.', 'feed-favorites' ) );
+
+			case 'url':
+				return filter_var( $value, FILTER_VALIDATE_URL ) ? true : new WP_Error( 'invalid_url', __( 'Invalid URL format.', 'feed-favorites' ) );
+
+			case 'integer':
+				return is_numeric( $value ) && (int) $value === (int) $value ? true : new WP_Error( 'invalid_integer', __( 'Value must be an integer.', 'feed-favorites' ) );
+
+			case 'boolean':
+				return in_array( $value, array( 0, 1, '0', '1', true, false ), true ) ? true : new WP_Error( 'invalid_boolean', __( 'Value must be a boolean.', 'feed-favorites' ) );
+
+			case 'feed_format':
+				return self::is_valid_feed_url( $value ) ? true : new WP_Error( 'invalid_feed_format', __( 'Invalid RSS feed URL format.', 'feed-favorites' ) );
+
+			case 'valid_interval':
+				$allowed_intervals = array( 900, 1800, 3600, 7200, 14400, 86400 );
+				return in_array( (int) $value, $allowed_intervals, true ) ? true : new WP_Error( 'invalid_interval', __( 'Invalid synchronization interval.', 'feed-favorites' ) );
+
+			default:
+				// Handle min:value and max:value rules.
+				if ( strpos( $rule, 'min:' ) === 0 ) {
+					$min = (int) substr( $rule, 4 );
+					/* translators: %d: Minimum value */
+					return (int) $value >= $min ? true : new WP_Error( 'min_value', sprintf( __( 'Value must be at least %d.', 'feed-favorites' ), $min ) );
+				}
+
+				if ( strpos( $rule, 'max:' ) === 0 ) {
+					$max = (int) substr( $rule, 4 );
+					/* translators: %d: Maximum value */
+					return (int) $value <= $max ? true : new WP_Error( 'max_value', sprintf( __( 'Value must be at most %d.', 'feed-favorites' ), $max ) );
+				}
+
+				return true; // Unknown rule; assume valid.
 		}
 	}
 }

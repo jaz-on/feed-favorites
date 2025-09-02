@@ -57,26 +57,47 @@ git clone https://github.com/jaz-on/feed-favorites.git
 
 ## Architecture
 
-The plugin uses a modern modular architecture:
+The plugin uses a modular architecture:
 
 ```
 feed-favorites/
 ├── feed-favorites.php          # Main entry point
-├── includes/               # Plugin classes
-│   ├── core.php           # Main class
-│   ├── config.php         # Configuration management
-│   ├── validator.php      # Data validation
-│   ├── http.php           # HTTP requests
-│   ├── ajax.php           # AJAX handling
-│   ├── components.php     # Administration components
-│   ├── admin.php          # Administration interface
-│   ├── sync.php           # Synchronization
-│   └── logger.php         # Log management
-├── admin/                  # Administration interface
+├── includes/                   # Plugin classes
+│   ├── class-feedfavorites.php # Main class (singleton)
+│   ├── class-config.php        # Configuration management
+│   ├── class-validator.php     # Data validation
+│   ├── class-http.php          # HTTP requests
+│   ├── class-ajax.php          # AJAX handling
+│   ├── class-components.php    # Admin UI components
+│   ├── class-admin.php         # Admin screens
+│   ├── class-sync.php          # Synchronization
+│   └── class-logger.php        # Logging
+├── admin/
+│   ├── js/
+│   ├── css/
 │   └── views/
-│       └── admin-page.php # Main template
-└── languages/              # Translation files
+└── languages/
 ```
+
+### Usage
+
+Prefer using hooks and the main singleton:
+
+```php
+$plugin = FeedFavorites::get_instance();
+// Or trigger a manual sync via AJAX action (secured) rather than instantiating classes directly.
+```
+
+## Security
+- All admin actions require proper capabilities and nonces.
+- AJAX requests are rate-limited and validate input URLs.
+- XML parsing forbids external network access and limits response size.
+
+## Privacy
+This plugin does not transmit personal data. It stores options and a capped in-database log (100 entries). Uninstall removes options, logs, transients, terms, and `favorite` posts.
+
+## Accessibility
+The admin UI uses native WordPress components (buttons, notices, tables) and supports keyboard navigation.
 
 ### Main Classes
 

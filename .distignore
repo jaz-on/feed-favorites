@@ -1,0 +1,19 @@
+# Exclude development and hidden files from plugin zip
+.DS_Store
+**/.DS_Store
+.git/
+.gitignore
+.gitattributes
+.distignore
+*.md
+*.lock
+composer.*
+phpunit.xml
+.phpcs.xml*
+/.phpunit.cache/
+/tests/
+/vendor/
+assets/screenshots/.keep
+assets/.gitkeep
+**/.gitkeep
+**/.keep

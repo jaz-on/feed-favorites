@@ -12,29 +12,32 @@
  * Requires at least: 5.0
  * Tested up to: 6.5
  * Requires PHP: 8.2
- * Network: false
  */
 
-// Security
+// Security.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Plugin constants
+// Plugin constants.
 define( 'FEED_FAVORITES_VERSION', '1.0.0' );
 define( 'FEED_FAVORITES_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'FEED_FAVORITES_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'FEED_FAVORITES_PLUGIN_FILE', __FILE__ );
 
-// Load main class
+// Load main class.
 require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-feedfavorites.php';
 
 /**
- * Plugin initialization function
+ * Plugin initialization function.
  */
 function feed_favorites_init() {
 	return FeedFavorites::get_instance();
 }
 
-// Initialize plugin
+// Initialize plugin.
 add_action( 'plugins_loaded', 'feed_favorites_init' );
+
+/**
+ * @package FeedFavorites
+ */

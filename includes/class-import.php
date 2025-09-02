@@ -176,19 +176,19 @@ class Import {
 			$memory_usage = memory_get_usage( true );
 			$memory_peak  = memory_get_peak_usage( true );
 
-									/* translators: 1: Current batch number, 2: Total batches, 3: Start article number, 4: End article number, 5: Memory usage, 6: Memory limit */
-			$logger->log_info(
-				/* translators: 1: Current batch number, 2: Total batches, 3: Start article number, 4: End article number, 5: Memory usage, 6: Memory limit */
-				sprintf(
-					__( 'Processing batch %1$d/%2$d (articles %3$d-%4$d) - Memory: %5$s/%6$s', 'feed-favorites' ),
-					$batch_count,
-					count( $batches ),
-					$batch_start,
-					$batch_end,
-					size_format( $memory_usage ),
-					$memory_limit
-				)
+									/* translators: 1: Current batch, 2: Total, 3: Start index, 4: End index, 5: Memory usage, 6: Memory limit */
+			/* translators: 1: Current batch number, 2: Total batches, 3: Start index, 4: End index, 5: Memory usage, 6: Memory limit */
+			$format_batch = __( 'Processing batch %1$d/%2$d (articles %3$d-%4$d) - Memory: %5$s/%6$s', 'feed-favorites' );
+			$message      = sprintf(
+				$format_batch,
+				$batch_count,
+				count( $batches ),
+				$batch_start,
+				$batch_end,
+				size_format( $memory_usage ),
+				$memory_limit
 			);
+			$logger->log_info( $message );
 
 			// If memory usage is too high, pause longer.
 			if ( $memory_usage > 100 * 1024 * 1024 ) { // 100MB.
@@ -404,12 +404,16 @@ class Import {
 		$logger->log_error( 'JSON import: ' . $message );
 
 		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page'         => 'feed-favorites',
-					'import_error' => rawurlencode( $message ),
+			wp_nonce_url(
+				add_query_arg(
+					array(
+						'post_type'    => 'favorite',
+						'page'         => 'feed-favorites',
+						'import_error' => rawurlencode( $message ),
+					),
+					admin_url( 'edit.php' )
 				),
-				admin_url( 'options-general.php' )
+				'feed_favorites_admin'
 			)
 		);
 		exit;
@@ -426,12 +430,16 @@ class Import {
 		$logger->log_success( 'JSON import: ' . $message );
 
 		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page'           => 'feed-favorites',
-					'import_success' => rawurlencode( $message ),
+			wp_nonce_url(
+				add_query_arg(
+					array(
+						'post_type'      => 'favorite',
+						'page'           => 'feed-favorites',
+						'import_success' => rawurlencode( $message ),
+					),
+					admin_url( 'edit.php' )
 				),
-				admin_url( 'options-general.php' )
+				'feed_favorites_admin'
 			)
 		);
 		exit;
@@ -546,10 +554,12 @@ class Import {
 	/**
 	 * Check system requirements before import.
 	 *
-	 * @param array $data The data to import.
+	 * @param array $data         The data to import.
+	 * @param int   $batch_size   The batch size used for import.
+	 * @param int   $import_limit The maximum number of items to import.
 	 * @return bool|WP_Error True if requirements met, error otherwise.
 	 */
-	private function check_system_requirements( $data ) {
+	private function check_system_requirements( $data, $batch_size, $import_limit ) {
 		$logger = new Logger();
 
 		// Get system limits.
@@ -570,20 +580,22 @@ class Import {
 		// Check memory requirements.
 		if ( $memory_limit_bytes > 0 && $estimated_memory > $memory_limit_bytes * 0.8 ) {
 			/* translators: 1: Estimated memory usage, 2: Available memory limit */
-			$logger->log_error(
-				sprintf(
-					__( 'Memory limit too low for import. Estimated: %1$s, Available: %2$s', 'feed-favorites' ),
-					size_format( $estimated_memory ),
-					$memory_limit
-				)
+			/* translators: 1: Estimated memory usage, 2: Available memory limit */
+			$format_memory_low = __( 'Memory limit too low for import. Estimated: %1$s, Available: %2$s', 'feed-favorites' );
+			$err_message       = sprintf(
+				$format_memory_low,
+				size_format( $estimated_memory ),
+				$memory_limit
 			);
+			$logger->log_error( $err_message );
 
 			/* translators: 1: Estimated memory requirement, 2: Available memory limit */
+			/* translators: 1: Estimated memory requirement, 2: Available memory limit */
+			$format_memory_req = __( 'Insufficient memory for import. Estimated requirement: %1$s, Available: %2$s. Please reduce batch size or contact your hosting provider to increase memory limit.', 'feed-favorites' );
 			return new WP_Error(
 				'insufficient_memory',
-				/* translators: 1: Estimated memory requirement, 2: Available memory limit */
 				sprintf(
-					__( 'Insufficient memory for import. Estimated requirement: %1$s, Available: %2$s. Please reduce batch size or contact your hosting provider to increase memory limit.', 'feed-favorites' ),
+					$format_memory_req,
 					size_format( $estimated_memory ),
 					$memory_limit
 				)
@@ -593,56 +605,48 @@ class Import {
 		// Check execution time.
 		if ( $max_execution_time > 0 && $max_execution_time < 300 ) {
 			/* translators: %s: Execution time limit in seconds */
-			$logger->log_error(
-				sprintf(
-					__( 'Execution time limit too low: %s seconds', 'feed-favorites' ),
-					$max_execution_time
-				)
-			);
+			/* translators: %s: Execution time limit in seconds */
+			$format_time_low = __( 'Execution time limit too low: %s seconds', 'feed-favorites' );
+			$time_message    = sprintf( $format_time_low, $max_execution_time );
+			$logger->log_error( $time_message );
 
 			/* translators: %s: Execution time limit in seconds */
+			/* translators: %s: Execution time limit in seconds */
+			$format_time_req = __( 'Execution time limit too low (%s seconds). Large imports may timeout. Contact your hosting provider to increase max_execution_time.', 'feed-favorites' );
 			return new WP_Error(
 				'insufficient_time',
-				/* translators: %s: Execution time limit in seconds */
-				sprintf(
-					__( 'Execution time limit too low (%s seconds). Large imports may timeout. Contact your hosting provider to increase max_execution_time.', 'feed-favorites' ),
-					$max_execution_time
-				)
+				sprintf( $format_time_req, $max_execution_time )
 			);
 		}
 
 		// Check file upload limits.
 		if ( $upload_max_filesize_bytes > 0 && $upload_max_filesize_bytes < 50 * 1024 * 1024 ) {
 			/* translators: %s: Upload file size limit */
-			$logger->log_error(
-				sprintf(
-					__( 'Upload file size limit too low: %s', 'feed-favorites' ),
-					$upload_max_filesize
-				)
-			);
+			/* translators: %s: Upload file size limit */
+			$format_upload_low = __( 'Upload file size limit too low: %s', 'feed-favorites' );
+			$upload_message    = sprintf( $format_upload_low, $upload_max_filesize );
+			$logger->log_error( $upload_message );
 
 			/* translators: %s: Upload file size limit */
+			/* translators: %s: Upload file size limit */
+			$format_upload_req = __( 'Upload file size limit too low (%s). Large export files may fail to upload. Contact your hosting provider.', 'feed-favorites' );
 			return new WP_Error(
 				'insufficient_upload_size',
-				/* translators: %s: Upload file size limit */
-				sprintf(
-					__( 'Upload file size limit too low (%s). Large export files may fail to upload. Contact your hosting provider.', 'feed-favorites' ),
-					$upload_max_filesize
-				)
+				sprintf( $format_upload_req, $upload_max_filesize )
 			);
 		}
 
 		/* translators: 1: Memory limit, 2: Execution time, 3: Upload file size limit, 4: Number of estimated entries */
-		$logger->log_info(
-			/* translators: 1: Memory limit, 2: Execution time, 3: Upload file size limit, 4: Number of estimated entries */
-			sprintf(
-				__( 'System check passed. Memory: %1$s, Time: %2$ss, Upload: %3$s, Estimated entries: %4$d', 'feed-favorites' ),
-				$memory_limit,
-				0 === $max_execution_time ? 'unlimited' : $max_execution_time,
-				$upload_max_filesize,
-				$estimated_entries
-			)
+		/* translators: 1: Memory limit, 2: Execution time, 3: Upload file size limit, 4: Number of estimated entries */
+		$format_info    = __( 'System check passed. Memory: %1$s, Time: %2$ss, Upload: %3$s, Estimated entries: %4$d', 'feed-favorites' );
+		$info_message   = sprintf(
+			$format_info,
+			$memory_limit,
+			0 === $max_execution_time ? 'unlimited' : $max_execution_time,
+			$upload_max_filesize,
+			$estimated_entries
 		);
+		$logger->log_info( $info_message );
 
 		return true;
 	}

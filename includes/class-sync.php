@@ -34,9 +34,17 @@ class Sync {
 			return new WP_Error( 'insufficient_permissions', __( 'Insufficient permissions to perform manual synchronization', 'feed-favorites' ) );
 		}
 
+		// Simple transient lock to avoid concurrent runs.
+		$lock_key = 'feed_favorites_sync_lock';
+		if ( get_transient( $lock_key ) ) {
+			return new WP_Error( 'sync_locked', __( 'A synchronization is already in progress. Please try again later.', 'feed-favorites' ) );
+		}
+		set_transient( $lock_key, 1, 5 * 60 ); // 5 minutes.
+
 		$feed_url = Config::get( 'feed_url' );
 
 		if ( empty( $feed_url ) ) {
+			delete_transient( $lock_key );
 			return new WP_Error( 'no_feed_url', __( 'Feed URL not configured', 'feed-favorites' ) );
 		}
 
@@ -45,10 +53,12 @@ class Sync {
 		if ( is_wp_error( $result ) ) {
 			$this->log_error( 'Manual synchronization failed: ' . $result->get_error_message() );
 			$this->update_stats( false );
+			delete_transient( $lock_key );
 			return $result;
 		} else {
 			$this->log_success( 'Manual synchronization successful: ' . $result . ' items processed' );
 			$this->update_stats( true, $result );
+			delete_transient( $lock_key );
 			/* translators: %d: Number of items processed */
 			return sprintf( __( 'Synchronization successful: %d items processed', 'feed-favorites' ), $result );
 		}
@@ -170,6 +180,7 @@ class Sync {
 			'title'        => sanitize_text_field( (string) $item->title ),
 			'link'         => esc_url_raw( (string) $item->link ),
 			'content'      => wp_kses_post( (string) $item->description ),
+			/* phpcs:ignore WordPress.NamingConventions.ValidVariableName */
 			'published'    => sanitize_text_field( (string) $item->pubDate ),
 			'author'       => sanitize_text_field( (string) $item->author ),
 			'source_title' => sanitize_text_field( (string) $item->source ),
@@ -194,7 +205,7 @@ class Sync {
 		$existing_post = get_posts(
 			array(
 				'post_type'              => 'favorite',
-				'meta_query'             => array(
+				'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Optimized with limits and cache flags
 					array(
 						'key'     => 'feed_link',
 						'value'   => $link,
@@ -219,13 +230,16 @@ class Sync {
 	 * @return int|WP_Error The post ID or error.
 	 */
 	private function create_post( $data ) {
+		$status        = Config::get( 'auto_sync', '1' ) ? 'publish' : 'draft';
+		$published_gmt = gmdate( 'Y-m-d H:i:s', strtotime( $data['published'] ) );
+
 		$post_data = array(
-			'post_title'   => $data['title'],
-			'post_content' => $data['content'],
-			'post_status'  => 'publish',
-			'post_type'    => 'favorite',
-			'post_date'    => $data['published'],
-			'post_author'  => get_current_user_id(),
+			'post_title'    => $data['title'],
+			'post_content'  => $data['content'],
+			'post_status'   => $status,
+			'post_type'     => 'favorite',
+			'post_date_gmt' => $published_gmt,
+			'post_author'   => get_current_user_id(),
 		);
 
 		return wp_insert_post( $post_data, true );
@@ -239,6 +253,9 @@ class Sync {
 	 * @return void
 	 */
 	private function update_acf_fields( $post_id, $data ) {
+		// Always persist feed_link as a native post meta for duplicate detection.
+		update_post_meta( $post_id, 'feed_link', $data['link'] );
+
 		if ( ! function_exists( 'update_field' ) ) {
 			return;
 		}
