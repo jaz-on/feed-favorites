@@ -284,7 +284,7 @@ class Import {
 		}
 
 		// Check if article already exists.
-		if ( $this->entry_exists( $entry['url'] ) ) {
+		if ( Post_Meta::entry_exists( $entry['url'] ) ) {
 			$logger->log_info( 'JSON import: Article already exists - ' . $entry['url'] );
 			return false;
 		}
@@ -314,40 +314,13 @@ class Import {
 			return false;
 		}
 
-		// Update ACF fields.
-		$this->update_acf_fields( $post_id, $data );
+		// Update post meta.
+		$this->update_post_meta( $post_id, $data );
 
 		$logger->log_success( 'JSON import: Post created successfully - ID: ' . $post_id . ' - Title: ' . $data['title'] );
 		return true;
 	}
 
-	/**
-	 * Check if entry exists.
-	 *
-	 * @param string $url The URL to check.
-	 * @return bool True if entry exists, false otherwise.
-	 */
-	private function entry_exists( $url ) {
-		$existing_post = get_posts(
-			array(
-				'post_type'              => 'favorite',
-				'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-					array(
-						'key'     => 'feed_link',
-						'value'   => $url,
-						'compare' => '=',
-					),
-				),
-				'posts_per_page'         => 1,
-				'post_status'            => 'any',
-				'no_found_rows'          => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-			)
-		);
-
-		return ! empty( $existing_post );
-	}
 
 	/**
 	 * Create a post.
@@ -365,32 +338,41 @@ class Import {
 			'post_author'  => get_current_user_id(),
 		);
 
-		return wp_insert_post( $post_data, true );
+		$post_id = wp_insert_post( $post_data, true );
+
+		// Set post format to 'link' if enabled.
+		if ( ! is_wp_error( $post_id ) && Config::get( 'use_link_format', true ) ) {
+			set_post_format( $post_id, 'link' );
+		}
+
+		return $post_id;
 	}
 
 	/**
-	 * Update ACF fields.
+	 * Update post meta.
 	 *
 	 * @param int   $post_id The post ID.
 	 * @param array $data The data to update.
 	 * @return void
 	 */
-	private function update_acf_fields( $post_id, $data ) {
-		if ( ! function_exists( 'update_field' ) ) {
-			return;
+	private function update_post_meta( $post_id, $data ) {
+		// Always persist feed_link as a native post meta for duplicate detection.
+		update_post_meta( $post_id, 'feed_link', $data['link'] );
+
+		// Update native WordPress post meta.
+		Post_Meta::update( $post_id, Post_Meta::EXTERNAL_URL, $data['link'] );
+		Post_Meta::update( $post_id, Post_Meta::SOURCE_AUTHOR, $data['author'] );
+		Post_Meta::update( $post_id, Post_Meta::SOURCE_SITE, $data['source_title'] );
+		Post_Meta::update( $post_id, Post_Meta::SOURCE_TYPE, 'rss_auto' );
+
+		// Set link_summary from content.
+		if ( ! empty( $data['content'] ) ) {
+			$summary = wp_trim_words( $data['content'], 50, '...' );
+			Post_Meta::update( $post_id, Post_Meta::LINK_SUMMARY, wp_kses_post( $summary ) );
 		}
 
-		$fields = array(
-			'feed_link'           => $data['link'],
-			'feed_author'         => $data['author'],
-			'feed_source_title'   => $data['source_title'],
-			'feed_source_url'     => $data['source_url'],
-			'feed_published_date' => $data['published'],
-		);
-
-		foreach ( $fields as $field => $value ) {
-			update_field( $field, $value, $post_id );
-		}
+		// Set link_commentary empty by default (user can add later).
+		Post_Meta::update( $post_id, Post_Meta::LINK_COMMENTARY, '' );
 	}
 
 	/**

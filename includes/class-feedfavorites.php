@@ -132,6 +132,12 @@ class FeedFavorites {
 		// Load dependencies.
 		$this->load_dependencies();
 
+		// Register post meta fields.
+		Post_Meta::register();
+
+		// Add post format support.
+		add_theme_support( 'post-formats', array( 'link' ) );
+
 		// Register Custom Post Types.
 		$this->register_post_types();
 	}
@@ -164,15 +170,6 @@ class FeedFavorites {
 			return;
 		}
 
-		// Check for ACF Pro.
-		if ( ! class_exists( 'ACF' ) ) {
-			add_action(
-				'admin_notices',
-				function () {
-					echo '<div class="notice notice-error"><p>Feed Favorites requires ACF Pro to function.</p></div>';
-				}
-			);
-		}
 	}
 
 	/**
@@ -181,8 +178,12 @@ class FeedFavorites {
 	 * @return void
 	 */
 	private function load_dependencies() {
-		// Load classes.
+		// Load core classes first.
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-config.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/core/class-post-meta.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/core/class-migration.php';
+
+		// Load other classes.
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-validator.php';
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-http.php';
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-ajax.php';
@@ -192,12 +193,37 @@ class FeedFavorites {
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-logger.php';
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-import.php';
 
+		// Load creation classes.
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/creation/class-manual-creator.php';
+
+		// Load admin classes.
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/admin/class-native-meta-boxes.php';
+
+		// Load display classes.
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/display/class-template-tags.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/display/template-functions.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/display/class-template-loader.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/display/class-frontend-filters.php';
+
+		// Load optional integration classes.
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/integrations/class-acf-integration.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/integrations/class-seo-integration.php';
+
 		// Initialize components.
 		$this->admin  = new Admin();
 		$this->sync   = new Sync();
 		$this->logger = new Logger();
 		$this->ajax   = new Ajax();
 		$this->import = new Import();
+
+		// Initialize new components.
+		new Native_Meta_Boxes();
+		new Template_Loader();
+		new Frontend_Filters();
+
+		// Initialize optional integrations.
+		new ACF_Integration();
+		new SEO_Integration();
 	}
 
 	/**
@@ -214,6 +240,9 @@ class FeedFavorites {
 
 		// Initialize configuration.
 		Config::init_defaults();
+
+		// Run migration.
+		Migration::run();
 
 		// Schedule cron job.
 		$this->schedule_cron();
@@ -315,6 +344,9 @@ class FeedFavorites {
 	 * @return void
 	 */
 	public function admin_init() {
+		// Run migration if needed.
+		Migration::run();
+
 		// Register settings with sanitization.
 		$this->register_settings();
 	}
@@ -326,19 +358,34 @@ class FeedFavorites {
 	 */
 	private function register_settings() {
 		$settings = array(
-			'feed_url'      => array(
+			'feed_url'              => array(
 				'sanitize_callback' => 'esc_url_raw',
 				'validate_callback' => array( Validator::class, 'validate_feed_url' ),
 			),
-			'auto_sync'     => array(
+			'auto_sync'             => array(
 				'sanitize_callback' => 'intval',
 				'validate_callback' => array( Validator::class, 'validate_auto_sync' ),
 			),
-			'sync_interval' => array(
+			'sync_interval'         => array(
 				'sanitize_callback' => array( Validator::class, 'validate_sync_interval' ),
 			),
-			'max_items'     => array(
+			'max_items'             => array(
 				'sanitize_callback' => array( Validator::class, 'validate_max_items' ),
+			),
+			'default_show_emoji'    => array(
+				'sanitize_callback' => array( Validator::class, 'validate_boolean_option' ),
+			),
+			'default_open_new_tab'  => array(
+				'sanitize_callback' => array( Validator::class, 'validate_boolean_option' ),
+			),
+			'link_summary_required' => array(
+				'sanitize_callback' => array( Validator::class, 'validate_boolean_option' ),
+			),
+			'commentary_required'   => array(
+				'sanitize_callback' => array( Validator::class, 'validate_boolean_option' ),
+			),
+			'use_link_format'       => array(
+				'sanitize_callback' => array( Validator::class, 'validate_boolean_option' ),
 			),
 		);
 

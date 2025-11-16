@@ -29,10 +29,15 @@ class Config {
 	 * @var array
 	 */
 	private static $defaults = array(
-		'feed_url'      => '',
-		'auto_sync'     => '1',
-		'sync_interval' => '7200', // 2 hours default.
-		'max_items'     => 50,
+		'feed_url'              => '',
+		'auto_sync'             => '1',
+		'sync_interval'         => '7200', // 2 hours default.
+		'max_items'             => 50,
+		'default_show_emoji'    => true,
+		'default_open_new_tab' => true,
+		'link_summary_required' => false,
+		'commentary_required'   => false,
+		'use_link_format'       => true,
 	);
 
 	/**

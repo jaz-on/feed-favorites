@@ -22,10 +22,15 @@ class Validator {
 	 * @var array
 	 */
 	private static $rules = array(
-		'feed_url'      => array( 'required', 'url', 'feed_format' ),
-		'auto_sync'     => array( 'boolean' ),
-		'sync_interval' => array( 'required', 'integer', 'valid_interval' ),
-		'max_items'     => array( 'integer', 'min:0', 'max:200' ),
+		'feed_url'              => array( 'required', 'url', 'feed_format' ),
+		'auto_sync'             => array( 'boolean' ),
+		'sync_interval'         => array( 'required', 'integer', 'valid_interval' ),
+		'max_items'             => array( 'integer', 'min:0', 'max:200' ),
+		'default_show_emoji'    => array( 'boolean' ),
+		'default_open_new_tab'  => array( 'boolean' ),
+		'link_summary_required' => array( 'boolean' ),
+		'commentary_required'   => array( 'boolean' ),
+		'use_link_format'       => array( 'boolean' ),
 	);
 
 	/**
@@ -186,6 +191,20 @@ class Validator {
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Validate boolean option.
+	 *
+	 * Sanitizes and validates boolean options (checkboxes).
+	 *
+	 * @param mixed $value The value to validate.
+	 * @return int Validated value (0 or 1).
+	 */
+	public static function validate_boolean_option( $value ) {
+		// Convert to boolean first, then to int.
+		$bool = boolval( $value );
+		return $bool ? 1 : 0;
 	}
 
 	/**
