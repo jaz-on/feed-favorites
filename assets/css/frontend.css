@@ -1,0 +1,169 @@
+/**
+ * Feed Favorites Frontend Styles
+ *
+ * Styles for displaying favorite link posts.
+ *
+ * @package FeedFavorites
+ * @since 1.0.0
+ */
+
+/* CSS Variables for customization */
+:root {
+	--feed-favorites-border-color: #c3c4c7;
+	--feed-favorites-summary-bg: #f0f0f1;
+	--feed-favorites-summary-text: #1d2327;
+	--feed-favorites-commentary-text: #1d2327;
+	--feed-favorites-link-color: #2271b1;
+	--feed-favorites-link-hover: #135e96;
+	--feed-favorites-source-color: #646970;
+}
+
+/* Main container */
+.feed-favorite-post {
+	margin-bottom: 2rem;
+	padding: 1.5rem;
+	border: 1px solid var(--feed-favorites-border-color);
+	border-radius: 4px;
+	background: #fff;
+}
+
+/* Entry header */
+.feed-favorite-post .entry-header {
+	margin-bottom: 1.5rem;
+}
+
+.feed-favorite-post .entry-title {
+	margin: 0 0 1rem;
+	font-size: 2rem;
+	line-height: 1.3;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.feed-favorite-post .entry-emoji {
+	font-size: 2rem;
+	line-height: 1;
+}
+
+/* Link summary section */
+.feed-favorite-summary {
+	background: var(--feed-favorites-summary-bg);
+	padding: 1.25rem;
+	margin-bottom: 1.5rem;
+	border-left: 4px solid var(--feed-favorites-link-color);
+	font-style: italic;
+	color: var(--feed-favorites-summary-text);
+	line-height: 1.6;
+}
+
+.feed-favorite-summary p {
+	margin: 0;
+}
+
+.feed-favorite-summary p + p {
+	margin-top: 1em;
+}
+
+/* Commentary section */
+.feed-favorite-commentary {
+	margin-bottom: 1.5rem;
+	color: var(--feed-favorites-commentary-text);
+	line-height: 1.7;
+}
+
+.feed-favorite-commentary p {
+	margin-bottom: 1em;
+}
+
+.feed-favorite-commentary p:last-child {
+	margin-bottom: 0;
+}
+
+/* External link button */
+.feed-favorite-link {
+	margin: 1.5rem 0;
+}
+
+.feed-favorites-external-link.button {
+	display: inline-block;
+	padding: 0.75rem 1.5rem;
+	background: var(--feed-favorites-link-color);
+	color: #fff;
+	text-decoration: none;
+	border-radius: 4px;
+	font-weight: 500;
+	transition: background-color 0.2s ease;
+}
+
+.feed-favorites-external-link.button:hover,
+.feed-favorites-external-link.button:focus {
+	background: var(--feed-favorites-link-hover);
+	color: #fff;
+	text-decoration: none;
+}
+
+.feed-favorites-external-link.button:focus {
+	outline: 2px solid var(--feed-favorites-link-color);
+	outline-offset: 2px;
+}
+
+/* Source attribution */
+.feed-favorite-source {
+	margin-top: 1.5rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--feed-favorites-border-color);
+	font-size: 0.9rem;
+	color: var(--feed-favorites-source-color);
+}
+
+.feed-favorites-source-attribution {
+	font-style: italic;
+}
+
+/* Entry footer */
+.feed-favorite-post .entry-footer {
+	margin-top: 1.5rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--feed-favorites-border-color);
+	font-size: 0.875rem;
+	color: var(--feed-favorites-source-color);
+}
+
+/* Responsive styles */
+@media screen and (max-width: 782px) {
+	.feed-favorite-post {
+		padding: 1rem;
+	}
+
+	.feed-favorite-post .entry-title {
+		font-size: 1.5rem;
+	}
+
+	.feed-favorite-summary {
+		padding: 1rem;
+	}
+
+	.feed-favorites-external-link.button {
+		display: block;
+		text-align: center;
+		width: 100%;
+	}
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--feed-favorites-border-color: #3c434a;
+		--feed-favorites-summary-bg: #2c3338;
+		--feed-favorites-summary-text: #f0f0f1;
+		--feed-favorites-commentary-text: #f0f0f1;
+		--feed-favorites-source-color: #a7aaad;
+	}
+
+	.feed-favorite-post {
+		background: #1d2327;
+		border-color: var(--feed-favorites-border-color);
+	}
+}
+
