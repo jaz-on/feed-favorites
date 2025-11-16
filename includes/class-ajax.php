@@ -21,7 +21,9 @@ class Ajax {
 	 */
 	public function __construct() {
 		add_action( 'wp_ajax_feed_favorites_sync', array( $this, 'handle_sync' ) );
+		add_action( 'wp_ajax_feed_favorites_manual_sync', array( $this, 'handle_sync' ) );
 		add_action( 'wp_ajax_feed_favorites_test_url', array( $this, 'handle_test_url' ) );
+		add_action( 'wp_ajax_feed_favorites_test_feed', array( $this, 'handle_test_feed' ) );
 		add_action( 'wp_ajax_feed_favorites_preview', array( $this, 'handle_preview' ) );
 		add_action( 'wp_ajax_feed_favorites_reset_stats', array( $this, 'handle_reset_stats' ) );
 	}
@@ -113,6 +115,28 @@ class Ajax {
 		}
 
 		$result = Http::test_feed_url( $url );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => esc_html( $result->get_error_message() ) ) );
+		} else {
+			wp_send_json_success( array( 'message' => esc_html( $result ) ) );
+		}
+	}
+
+	/**
+	 * Handle AJAX feed test (uses configured feed URL).
+	 *
+	 * @return void
+	 */
+	public function handle_test_feed() {
+		$this->verify_request( 'feed_favorites_test_feed' );
+
+		$feed_url = Config::get( 'feed_url' );
+		if ( empty( $feed_url ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Feed URL not configured', 'feed-favorites' ) ) );
+		}
+
+		$result = Http::test_feed_url( $feed_url );
 
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => esc_html( $result->get_error_message() ) ) );

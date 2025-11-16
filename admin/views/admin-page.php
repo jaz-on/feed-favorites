@@ -19,11 +19,46 @@ if ( ! empty( $feed_url ) ) {
 }
 
 // Get statistics.
+$total_posts = wp_count_posts( 'favorite' )->publish;
+
+// Count manual vs RSS posts.
+$manual_posts = get_posts(
+	array(
+		'post_type'      => 'favorite',
+		'posts_per_page' => -1,
+		'post_status'    => 'any',
+		'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			array(
+				'key'   => '_feed_favorites_source_type',
+				'value' => 'manual',
+			),
+		),
+		'fields'          => 'ids',
+	)
+);
+
+$rss_posts = get_posts(
+	array(
+		'post_type'      => 'favorite',
+		'posts_per_page' => -1,
+		'post_status'    => 'any',
+		'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			array(
+				'key'   => '_feed_favorites_source_type',
+				'value' => 'rss_auto',
+			),
+		),
+		'fields'          => 'ids',
+	)
+);
+
 $stats = array(
-	'total_posts' => wp_count_posts( 'favorite' )->publish,
-	'sync_count'  => get_option( 'feed_favorites_sync_count', 0 ),
-	'error_count' => get_option( 'feed_favorites_error_count', 0 ),
-	'last_sync'   => get_option( 'feed_favorites_last_sync', '' ),
+	'total_posts'  => $total_posts,
+	'manual_posts' => count( $manual_posts ),
+	'rss_posts'    => count( $rss_posts ),
+	'sync_count'   => get_option( 'feed_favorites_sync_count', 0 ),
+	'error_count'  => get_option( 'feed_favorites_error_count', 0 ),
+	'last_sync'    => get_option( 'feed_favorites_last_sync', '' ),
 );
 
 // Get recent logs.

@@ -156,23 +156,9 @@ class Admin {
 											<span class="requirement-value"><?php esc_html_e( 'With starred items from any RSS reader service.', 'feed-favorites' ); ?></span>
 										</span>
 										<span class="requirement-item">
-											<strong><?php esc_html_e( 'ACF Pro', 'feed-favorites' ); ?></strong> 
-											<span class="requirement-value"><?php esc_html_e( 'For enhanced content management and custom fields.', 'feed-favorites' ); ?></span>
-										</span>
-										<span class="requirement-item">
 											<strong><?php esc_html_e( 'Theme', 'feed-favorites' ); ?></strong> 
 											<span class="requirement-value"><?php esc_html_e( 'Compatible that supports custom post types.', 'feed-favorites' ); ?></span>
 										</span>
-									</div>
-									
-									<!-- ACF Pro Benefits -->
-									<div class="acf-benefits">
-										<h6><?php esc_html_e( 'ACF Pro enhances Feed Favorites by providing:', 'feed-favorites' ); ?></h6>
-										<ul class="benefits-list">
-											<li><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Custom fields for source URL, author, and original publication date', 'feed-favorites' ); ?></li>
-											<li><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Flexible content layouts for your starred articles', 'feed-favorites' ); ?></li>
-											<li><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Better content organization and display options', 'feed-favorites' ); ?></li>
-										</ul>
 									</div>
 								</div>
 						</div>
@@ -191,8 +177,20 @@ class Admin {
 					<div class="stats-grid">
 						<div class="stat-card">
 							<div class="stat-number"><?php echo esc_html( $stats['total_posts'] ); ?></div>
-							<div class="stat-label"><?php esc_html_e( 'Synchronized Articles', 'feed-favorites' ); ?></div>
-							<div class="stat-description"><?php esc_html_e( 'Starred articles imported', 'feed-favorites' ); ?></div>
+							<div class="stat-label"><?php esc_html_e( 'Total Favorites', 'feed-favorites' ); ?></div>
+							<div class="stat-description"><?php esc_html_e( 'All favorite posts', 'feed-favorites' ); ?></div>
+						</div>
+						
+						<div class="stat-card">
+							<div class="stat-number"><?php echo esc_html( isset( $stats['rss_posts'] ) ? $stats['rss_posts'] : 0 ); ?></div>
+							<div class="stat-label"><?php esc_html_e( 'RSS Imported', 'feed-favorites' ); ?></div>
+							<div class="stat-description"><?php esc_html_e( 'From RSS feeds', 'feed-favorites' ); ?></div>
+						</div>
+						
+						<div class="stat-card">
+							<div class="stat-number"><?php echo esc_html( isset( $stats['manual_posts'] ) ? $stats['manual_posts'] : 0 ); ?></div>
+							<div class="stat-label"><?php esc_html_e( 'Manual Posts', 'feed-favorites' ); ?></div>
+							<div class="stat-description"><?php esc_html_e( 'Created manually', 'feed-favorites' ); ?></div>
 						</div>
 						
 						<div class="stat-card">
@@ -256,12 +254,13 @@ class Admin {
 						</div>
 						
 						<div class="import-method">
-							<h4><?php esc_html_e( 'Method 2: Manual Entry', 'feed-favorites' ); ?></h4>
-							<p><?php esc_html_e( 'Add individual favorites manually', 'feed-favorites' ); ?></p>
-							<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=favorite' ) ); ?>" class="button button-secondary">
+							<h4><?php esc_html_e( 'Method 2: Manual Creation', 'feed-favorites' ); ?></h4>
+							<p><?php esc_html_e( 'Create favorite link posts manually with summary and commentary', 'feed-favorites' ); ?></p>
+							<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=favorite' ) ); ?>" class="button button-primary">
 								<span class="dashicons dashicons-plus-alt"></span>
-								<?php esc_html_e( 'Add Favorite', 'feed-favorites' ); ?>
+								<?php esc_html_e( 'Create Link Post', 'feed-favorites' ); ?>
 							</a>
+							<p class="description"><?php esc_html_e( 'Manually create favorite posts with external URL, summary, and your personal commentary.', 'feed-favorites' ); ?></p>
 						</div>
 					</div>
 				</div>
@@ -347,6 +346,102 @@ class Admin {
 						
 						<p class="submit">
 							<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e( 'Save Settings', 'feed-favorites' ); ?>" />
+						</p>
+					</form>
+				</div>
+			</div>
+			
+			<!-- Display Options -->
+			<div class="postbox">
+				<h2 class="hndle ui-sortable-handle">
+					<span class="dashicons dashicons-visibility"></span>
+					<?php esc_html_e( 'Display Options', 'feed-favorites' ); ?>
+				</h2>
+				<div class="inside">
+					<p class="description"><?php esc_html_e( 'Configure default display settings for favorite posts', 'feed-favorites' ); ?></p>
+					
+					<form method="post" action="options.php" class="setup-form">
+						<?php settings_fields( 'feed_favorites_options' ); ?>
+						
+						<table class="form-table">
+							<tr>
+								<th scope="row">
+									<label for="default_show_emoji"><?php esc_html_e( 'Show Emoji by Default', 'feed-favorites' ); ?></label>
+								</th>
+								<td>
+									<input type="checkbox" 
+										id="default_show_emoji" 
+										name="feed_favorites_default_show_emoji" 
+										value="1" 
+										<?php checked( Config::get( 'default_show_emoji', true ), true ); ?> />
+									<label for="default_show_emoji"><?php esc_html_e( 'Display emoji in post titles by default', 'feed-favorites' ); ?></label>
+									<p class="description"><?php esc_html_e( 'If enabled, emojis will be shown in favorite post titles. Can be overridden per post.', 'feed-favorites' ); ?></p>
+								</td>
+							</tr>
+							
+							<tr>
+								<th scope="row">
+									<label for="default_open_new_tab"><?php esc_html_e( 'Open Links in New Tab by Default', 'feed-favorites' ); ?></label>
+								</th>
+								<td>
+									<input type="checkbox" 
+										id="default_open_new_tab" 
+										name="feed_favorites_default_open_new_tab" 
+										value="1" 
+										<?php checked( Config::get( 'default_open_new_tab', true ), true ); ?> />
+									<label for="default_open_new_tab"><?php esc_html_e( 'Open external links in a new tab by default', 'feed-favorites' ); ?></label>
+									<p class="description"><?php esc_html_e( 'If enabled, external links will open in a new tab. Can be overridden per post.', 'feed-favorites' ); ?></p>
+								</td>
+							</tr>
+							
+							<tr>
+								<th scope="row">
+									<label for="link_summary_required"><?php esc_html_e( 'Require Link Summary', 'feed-favorites' ); ?></label>
+								</th>
+								<td>
+									<input type="checkbox" 
+										id="link_summary_required" 
+										name="feed_favorites_link_summary_required" 
+										value="1" 
+										<?php checked( Config::get( 'link_summary_required', false ), true ); ?> />
+									<label for="link_summary_required"><?php esc_html_e( 'Make link summary a required field', 'feed-favorites' ); ?></label>
+									<p class="description"><?php esc_html_e( 'If enabled, users must provide a summary when creating favorite posts.', 'feed-favorites' ); ?></p>
+								</td>
+							</tr>
+							
+							<tr>
+								<th scope="row">
+									<label for="commentary_required"><?php esc_html_e( 'Require Commentary', 'feed-favorites' ); ?></label>
+								</th>
+								<td>
+									<input type="checkbox" 
+										id="commentary_required" 
+										name="feed_favorites_commentary_required" 
+										value="1" 
+										<?php checked( Config::get( 'commentary_required', false ), true ); ?> />
+									<label for="commentary_required"><?php esc_html_e( 'Make commentary a required field', 'feed-favorites' ); ?></label>
+									<p class="description"><?php esc_html_e( 'If enabled, users must provide commentary when creating favorite posts.', 'feed-favorites' ); ?></p>
+								</td>
+							</tr>
+							
+							<tr>
+								<th scope="row">
+									<label for="use_link_format"><?php esc_html_e( 'Use Link Post Format', 'feed-favorites' ); ?></label>
+								</th>
+								<td>
+									<input type="checkbox" 
+										id="use_link_format" 
+										name="feed_favorites_use_link_format" 
+										value="1" 
+										<?php checked( Config::get( 'use_link_format', true ), true ); ?> />
+									<label for="use_link_format"><?php esc_html_e( 'Automatically set post format to "link" for favorite posts', 'feed-favorites' ); ?></label>
+									<p class="description"><?php esc_html_e( 'If enabled, all favorite posts will use the WordPress link post format.', 'feed-favorites' ); ?></p>
+								</td>
+							</tr>
+						</table>
+						
+						<p class="submit">
+							<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e( 'Save Display Options', 'feed-favorites' ); ?>" />
 						</p>
 					</form>
 				</div>
