@@ -19,20 +19,38 @@ if ( ! current_user_can( 'activate_plugins' ) ) {
 	exit;
 }
 
-// Clean up options
-delete_option( 'feed_favorites_settings' );
-delete_option( 'feed_favorites_last_sync' );
-delete_option( 'feed_favorites_sync_status' );
+// Clean up all plugin options
+$options_to_delete = array(
+	'feed_favorites_feed_url',
+	'feed_favorites_auto_sync',
+	'feed_favorites_sync_interval',
+	'feed_favorites_max_items',
+	'feed_favorites_default_show_emoji',
+	'feed_favorites_default_open_new_tab',
+	'feed_favorites_link_summary_required',
+	'feed_favorites_commentary_required',
+	'feed_favorites_use_link_format',
+	'feed_favorites_last_sync',
+	'feed_favorites_sync_count',
+	'feed_favorites_error_count',
+	'feed_favorites_logs',
+	'feed_favorites_db_version',
+	'feed_favorites_has_template',
+	'feed_favorites_system_check_shown',
+);
+
+foreach ( $options_to_delete as $option ) {
+	delete_option( $option );
+}
 
 // Clean up transients
 delete_transient( 'feed_favorites_sync_lock' );
-delete_transient( 'feed_favorites_api_cache' );
 
 // Clean up scheduled events
 wp_clear_scheduled_hook( 'feed_favorites_cron_sync' );
 
 // Clean up custom post types and their data
-$post_types = array( 'feed_favorite' );
+$post_types = array( 'favorite' );
 
 foreach ( $post_types as $post_type ) {
 	// Get all posts of this type
@@ -51,8 +69,8 @@ foreach ( $post_types as $post_type ) {
 	}
 }
 
-// Clean up taxonomies
-$taxonomies = array( 'feed_favorite_category' );
+// Clean up taxonomies (if any exist)
+$taxonomies = array();
 
 foreach ( $taxonomies as $taxonomy ) {
 	$terms = get_terms(
