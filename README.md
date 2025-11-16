@@ -4,25 +4,30 @@
 ![PHP](https://img.shields.io/badge/PHP-8.2+-blue)
 ![License](https://img.shields.io/badge/License-GPL%20v2+-green)
 
-**Feed Favorites** is a modern WordPress plugin that automatically synchronizes your starred articles from RSS feeds with your WordPress site.
+**Feed Favorites** is a modern WordPress plugin that automatically synchronizes your starred articles from RSS feeds with your WordPress site and allows manual creation of favorite link posts with summary and commentary.
 
 ## Features
 
 - **Automatic synchronization** with RSS feeds
+- **Manual creation** of favorite link posts with summary and commentary
+- **Native WordPress post meta** exclusively
+- **Hybrid template system** (theme templates + plugin fallback)
+- **Kevin Quirk-style display** (summary + commentary + external link)
+- **Post format support** (link format)
 - **WordPress post creation** from starred articles
 - **Complete metadata management** (title, URL, date, etc.)
 - **Scheduled synchronization** via WordPress cron
 - **Intuitive administration interface**
 - **Robust data validation**
 - **Detailed logging system**
+- **SEO integration** (OpenGraph, Twitter Cards, structured data)
 - **Modern modular architecture**
 
 ## Requirements
 
 - WordPress 5.0 or higher
 - PHP 8.2 or higher
-- ACF Pro plugin (Advanced Custom Fields Pro)
-- RSS feed with starred articles
+- RSS feed with starred articles (for RSS import)
 
 ## Installation
 
@@ -51,9 +56,76 @@ git clone https://github.com/jaz-on/feed-favorites.git
 
 ### Advanced Configuration
 
-- **ACF Fields**: Customize fields according to your needs
-- **Templates**: Modify article display
+- **Manual Creation**: Create favorite link posts manually with external URL, summary, and commentary
+- **Display Options**: Configure emoji display, link behavior, and required fields
+- **Templates**: Create `single-favorite.php` in your theme or use the default template
+- **Template Functions**: Use functions like `feed_favorites_get_url()`, `feed_favorites_get_summary()`, etc.
 - **Logs**: Configure logging detail level
+
+## Template System
+
+The plugin uses a hybrid template system:
+
+1. **Theme Templates**: If your theme has `single-favorite.php` or `content-favorite.php`, it will be used automatically
+2. **Plugin Fallback**: If no theme template exists, the plugin provides a default template with Kevin Quirk-style structure
+
+### Creating a Theme Template
+
+Create `single-favorite.php` in your theme root:
+
+```php
+<?php
+get_header();
+while ( have_posts() ) :
+    the_post();
+    ?>
+    <article id="post-<?php the_ID(); ?>" <?php post_class( 'feed-favorite-post' ); ?>>
+        <h1><?php the_title(); ?></h1>
+        
+        <?php if ( feed_favorites_get_summary() ) : ?>
+            <div class="summary">
+                <?php feed_favorites_the_summary(); ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ( feed_favorites_get_commentary() ) : ?>
+            <div class="commentary">
+                <?php feed_favorites_the_commentary(); ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ( feed_favorites_get_url() ) : ?>
+            <a href="<?php feed_favorites_the_url(); ?>" class="external-link">
+                Read Original
+            </a>
+        <?php endif; ?>
+    </article>
+    <?php
+endwhile;
+get_footer();
+```
+
+### Template Functions
+
+All template functions are prefixed with `feed_favorites_`:
+
+- `feed_favorites_get_url( $post_id = null )` - Get external URL
+- `feed_favorites_the_url( $post_id = null )` - Display external URL
+- `feed_favorites_get_summary( $post_id = null )` - Get link summary
+- `feed_favorites_the_summary( $post_id = null )` - Display link summary
+- `feed_favorites_get_commentary( $post_id = null )` - Get commentary
+- `feed_favorites_the_commentary( $post_id = null )` - Display commentary
+- `feed_favorites_get_external_link( $post_id = null, $text = null, $class = 'feed-favorites-external-link' )` - Get external link HTML
+- `feed_favorites_the_external_link( $post_id = null, $text = null, $class = 'feed-favorites-external-link' )` - Display external link
+- `feed_favorites_get_source_author( $post_id = null )` - Get source author
+- `feed_favorites_the_source_author( $post_id = null )` - Display source author
+- `feed_favorites_get_source_site( $post_id = null )` - Get source site
+- `feed_favorites_the_source_site( $post_id = null )` - Display source site
+- `feed_favorites_get_source_attribution( $post_id = null )` - Get source attribution HTML
+- `feed_favorites_the_source_attribution( $post_id = null )` - Display source attribution
+- `feed_favorites_is_link( $post_id = null )` - Check if post is a link post
+- `feed_favorites_is_manual( $post_id = null )` - Check if post is manually created
+- `feed_favorites_is_rss_import( $post_id = null )` - Check if post is RSS imported
 
 ## Architecture
 
@@ -71,54 +143,55 @@ feed-favorites/
 │   ├── class-components.php    # Admin UI components
 │   ├── class-admin.php         # Admin screens
 │   ├── class-sync.php          # Synchronization
-│   └── class-logger.php        # Logging
+│   ├── class-import.php        # JSON import
+│   ├── class-logger.php        # Logging
+│   ├── core/
+│   │   └── class-post-meta.php # Native post meta management
+│   ├── creation/
+│   │   └── class-manual-creator.php # Manual post creation
+│   ├── admin/
+│   │   └── class-native-meta-boxes.php # Native meta boxes
+│   ├── display/
+│   │   ├── class-template-tags.php # Template tags
+│   │   ├── template-functions.php # Public template functions
+│   │   ├── class-template-loader.php # Template loading
+│   │   └── class-frontend-filters.php # Frontend content filters
+│   └── integrations/
+│       └── class-seo-integration.php # SEO meta tags
 ├── admin/
 │   ├── js/
 │   ├── css/
 │   └── views/
+├── assets/
+│   ├── css/
+│   └── js/
+├── templates/
+│   └── single-favorite.php # Default template
 └── languages/
 ```
 
-### Usage
-
-Prefer using hooks and the main singleton:
-
-```php
-$plugin = FeedFavorites::get_instance();
-// Or trigger a manual sync via AJAX action (secured) rather than instantiating classes directly.
-```
-
 ## Security
-- All admin actions require proper capabilities and nonces.
-- AJAX requests are rate-limited and validate input URLs.
-- XML parsing forbids external network access and limits response size.
+
+- All admin actions require proper capabilities and nonces
+- AJAX requests are rate-limited and validate input URLs
+- XML parsing forbids external network access and limits response size
+- All data is sanitized and validated before storage
 
 ## Privacy
+
 This plugin does not transmit personal data. It stores options and a capped in-database log (100 entries). Uninstall removes options, logs, transients, terms, and `favorite` posts.
 
 ## Accessibility
+
 The admin UI uses native WordPress components (buttons, notices, tables) and supports keyboard navigation.
-
-### Main Classes
-
-| Class | Responsibility |
-|-------|----------------|
-| `FeedFavorites` | Main plugin class |
-| `Config` | Centralized configuration management |
-| `Validator` | Centralized data validation |
-| `Http` | HTTP request management |
-| `Ajax` | AJAX request handling |
-| `Components` | Administration components |
-| `Admin` | Administration interface |
-| `Sync` | Data synchronization |
-| `Logger` | Log management |
 
 ## Usage
 
 ### Manual Synchronization
 
+Use the admin interface or programmatically:
+
 ```php
-// Manual synchronization
 $sync = new Sync();
 $result = $sync->manual_sync();
 ```
@@ -129,100 +202,58 @@ $result = $sync->manual_sync();
 // Modify configuration
 Config::set('feed_url', 'https://example.com/feed.xml');
 Config::set('auto_sync', true);
-Config::set('sync_interval', 'hourly');
+Config::set('sync_interval', '7200');
 ```
 
-### Hooks and Filters
+### Manual Post Creation
 
 ```php
-// Hook before synchronization
-add_action('feed_favorites_before_sync', function($feed_url) {
-    // Custom code before sync
-});
+$data = array(
+    'title' => 'Article Title',
+    'external_url' => 'https://example.com/article',
+    'link_summary' => 'Article summary...',
+    'link_commentary' => 'My thoughts...',
+    'source_author' => 'Author Name',
+    'source_site' => 'Site Name',
+);
 
-// Hook after synchronization
-add_action('feed_favorites_after_sync', function($result) {
-    // Custom code after sync
-});
-
-// Filter to modify data
-add_filter('feed_favorites_item_data', function($item_data, $original_item) {
-    // Modify data
-    return $item_data;
-}, 10, 2);
+$post_id = Manual_Creator::create_link_post($data);
 ```
 
-## Logs and Debugging
+## FAQ
 
-The plugin includes a complete logging system:
+### How do I customize the display?
 
-```php
-// Use logger
-Logger::info('Synchronization started');
-Logger::error('Sync error', $exception);
-Logger::debug('Received data', $data);
-```
+Create `single-favorite.php` in your theme root directory. The plugin will automatically use it. If no theme template exists, the plugin provides a default template.
 
-### Log Levels
+### Can I require summary or commentary?
 
-- **ERROR**: Critical errors
-- **WARNING**: Warnings
-- **INFO**: General information
-- **DEBUG**: Debug information
+Yes. In the admin settings under "Display Options", you can enable "Require Link Summary" and "Require Commentary".
 
-## Testing
+### How are duplicates detected?
 
-### Unit Tests
+Duplicates are detected using the external URL. The plugin checks both the native `EXTERNAL_URL` meta and the legacy `feed_link` meta for compatibility.
 
-```bash
-# Install test dependencies
-composer install --dev
+### What post format is used?
 
-# Run tests
-vendor/bin/phpunit
-```
-
-### Integration Tests
-
-```bash
-# Tests with WordPress
-vendor/bin/phpunit --testsuite integration
-```
-
-## Development
-
-### Code Structure
-
-The plugin follows WordPress standards and PHP best practices:
-
-- **PSR-4**: Class autoloading
-- **PSR-12**: Coding standards
-- **WordPress Coding Standards**: WordPress compliance
-
-### Adding Features
-
-1. **New class**: Create file in `includes/`
-2. **Admin interface**: Add components in `components.php`
-3. **Tests**: Write corresponding tests
-4. **Documentation**: Update this documentation
-
-### Contributing
-
-1. Fork the project
-2. Create a branch for your feature
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+All favorite posts use the WordPress 'link' post format for better theme integration.
 
 ## Changelog
 
 ### 1.0.0
-- Initial version
-- Automatic synchronization with RSS feeds
+
+- Initial release
+- Automatic RSS synchronization
+- Manual creation of favorite link posts
+- Native WordPress post meta exclusively
+- Hybrid template system (theme templates + plugin fallback)
+- Kevin Quirk-style display (summary + commentary + external link)
+- Post format support (link format)
+- Template functions for theme developers
+- SEO integration (OpenGraph, Twitter Cards, structured data)
 - Complete administration interface
-- Integrated logging system
-- Data validation
-- ACF Pro support
+- Robust data validation
+- Detailed logging system
 - Modern modular architecture
 
 ## Support
@@ -230,8 +261,6 @@ The plugin follows WordPress standards and PHP best practices:
 - **Repository**: https://github.com/jaz-on/feed-favorites
 - **Issues**: https://github.com/jaz-on/feed-favorites/issues
 - **Releases**: https://github.com/jaz-on/feed-favorites/releases
-- **Documentation**: https://github.com/jaz-on/feed-favorites/wiki
-- **Discussions**: https://github.com/jaz-on/feed-favorites/discussions
 
 ## License
 
@@ -243,10 +272,3 @@ This project is licensed under GPL v2 or later. See the [LICENSE](LICENSE) file 
 
 - GitHub: [@jaz-on](https://github.com/jaz-on)
 - Website: [jasonrouet.com](https://jasonrouet.com)
-- Email: [bonjour@jasonrouet.com](mailto:bonjour@jasonrouet.com)
-
-## Acknowledgments
-
-- [WordPress](https://wordpress.org/) for the platform
-- [ACF Pro](https://www.advancedcustomfields.com/) for custom fields
-- [RSS](https://en.wikipedia.org/wiki/RSS) for feed standards
