@@ -6,6 +6,8 @@
  * Author: Jason Rouet
  * Author URI: https://jasonrouet.com
  * Plugin URI: https://github.com/jaz-on/feed-favorites
+ * GitHub Plugin URI: https://github.com/jaz-on/feed-favorites
+ * Primary Branch: dev
  * License: GPL v2 or later
  * Text Domain: feed-favorites
  * Domain Path: /languages
