@@ -11,12 +11,13 @@ if (!defined('ABSPATH')) {
     define('ABSPATH', '/tmp/wordpress/');
 }
 
-// Load WordPress test environment
-if (file_exists(getenv('WP_TESTS_DIR') . '/includes/bootstrap.php')) {
-    require_once getenv('WP_TESTS_DIR') . '/includes/bootstrap.php';
+// Load WordPress test environment.
+$wp_tests_dir = getenv( 'WP_TESTS_DIR' );
+if ( $wp_tests_dir && file_exists( $wp_tests_dir . '/includes/bootstrap.php' ) ) {
+    require_once $wp_tests_dir . '/includes/bootstrap.php';
 } else {
-    // Fallback for local development
-    require_once dirname(dirname(dirname(dirname(__DIR__)))) . '/wp-tests-lib/includes/bootstrap.php';
+    // Fallback for local development (path relative to typical WP develop checkout).
+    require_once dirname( dirname( dirname( dirname( __DIR__ ) ) ) ) . '/wp-tests-lib/includes/bootstrap.php';
 }
 
 // Load plugin

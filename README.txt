@@ -4,7 +4,7 @@ Tags: rss, synchronization, import, bookmarks, favorites
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 8.2
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -139,6 +139,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 == Changelog ==
+
+= 1.0.1 =
+* Git Updater: primary branch set to `main` for stable updates
+* Aligned plugin metadata (Tested up to 6.9) and developer documentation (branch workflow, manual QA checklist)
+* CI: GitHub Actions for PHPCS and PHPUnit; `phpunit.xml.dist` and WordPress test installer under `bin/`
+* Migration: run ACF/native meta migration only when upgrading from a version below 1.0.0
 
 = 1.0.0 =
 * Initial release

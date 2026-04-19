@@ -146,4 +146,3 @@ class SEO_Integration {
 		echo "\n" . '</script>' . "\n";
 	}
 }
-

@@ -273,4 +273,3 @@ class Template_Tags {
 		return 'rss_auto' === $source_type;
 	}
 }
-

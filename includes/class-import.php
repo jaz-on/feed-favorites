@@ -77,6 +77,7 @@ class Import {
 		// Validate MIME type.
 		$finfo     = finfo_open( FILEINFO_MIME_TYPE );
 		$mime_type = finfo_file( $finfo, $file['tmp_name'] );
+		// phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- finfo_close() still required on PHP 8.2.
 		finfo_close( $finfo );
 
 		$allowed_mimes = array(
@@ -176,7 +177,6 @@ class Import {
 			$memory_usage = memory_get_usage( true );
 			$memory_peak  = memory_get_peak_usage( true );
 
-									/* translators: 1: Current batch, 2: Total, 3: Start index, 4: End index, 5: Memory usage, 6: Memory limit */
 			/* translators: 1: Current batch number, 2: Total batches, 3: Start index, 4: End index, 5: Memory usage, 6: Memory limit */
 			$format_batch = __( 'Processing batch %1$d/%2$d (articles %3$d-%4$d) - Memory: %5$s/%6$s', 'feed-favorites' );
 			$message      = sprintf(
@@ -562,7 +562,6 @@ class Import {
 		// Check memory requirements.
 		if ( $memory_limit_bytes > 0 && $estimated_memory > $memory_limit_bytes * 0.8 ) {
 			/* translators: 1: Estimated memory usage, 2: Available memory limit */
-			/* translators: 1: Estimated memory usage, 2: Available memory limit */
 			$format_memory_low = __( 'Memory limit too low for import. Estimated: %1$s, Available: %2$s', 'feed-favorites' );
 			$err_message       = sprintf(
 				$format_memory_low,
@@ -571,7 +570,6 @@ class Import {
 			);
 			$logger->log_error( $err_message );
 
-			/* translators: 1: Estimated memory requirement, 2: Available memory limit */
 			/* translators: 1: Estimated memory requirement, 2: Available memory limit */
 			$format_memory_req = __( 'Insufficient memory for import. Estimated requirement: %1$s, Available: %2$s. Please reduce batch size or contact your hosting provider to increase memory limit.', 'feed-favorites' );
 			return new WP_Error(
@@ -587,12 +585,10 @@ class Import {
 		// Check execution time.
 		if ( $max_execution_time > 0 && $max_execution_time < 300 ) {
 			/* translators: %s: Execution time limit in seconds */
-			/* translators: %s: Execution time limit in seconds */
 			$format_time_low = __( 'Execution time limit too low: %s seconds', 'feed-favorites' );
 			$time_message    = sprintf( $format_time_low, $max_execution_time );
 			$logger->log_error( $time_message );
 
-			/* translators: %s: Execution time limit in seconds */
 			/* translators: %s: Execution time limit in seconds */
 			$format_time_req = __( 'Execution time limit too low (%s seconds). Large imports may timeout. Contact your hosting provider to increase max_execution_time.', 'feed-favorites' );
 			return new WP_Error(
@@ -604,12 +600,10 @@ class Import {
 		// Check file upload limits.
 		if ( $upload_max_filesize_bytes > 0 && $upload_max_filesize_bytes < 50 * 1024 * 1024 ) {
 			/* translators: %s: Upload file size limit */
-			/* translators: %s: Upload file size limit */
 			$format_upload_low = __( 'Upload file size limit too low: %s', 'feed-favorites' );
 			$upload_message    = sprintf( $format_upload_low, $upload_max_filesize );
 			$logger->log_error( $upload_message );
 
-			/* translators: %s: Upload file size limit */
 			/* translators: %s: Upload file size limit */
 			$format_upload_req = __( 'Upload file size limit too low (%s). Large export files may fail to upload. Contact your hosting provider.', 'feed-favorites' );
 			return new WP_Error(
@@ -618,7 +612,6 @@ class Import {
 			);
 		}
 
-		/* translators: 1: Memory limit, 2: Execution time, 3: Upload file size limit, 4: Number of estimated entries */
 		/* translators: 1: Memory limit, 2: Execution time, 3: Upload file size limit, 4: Number of estimated entries */
 		$format_info    = __( 'System check passed. Memory: %1$s, Time: %2$ss, Upload: %3$s, Estimated entries: %4$d', 'feed-favorites' );
 		$info_message   = sprintf(

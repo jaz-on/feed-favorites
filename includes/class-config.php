@@ -151,8 +151,8 @@ class Config {
 			// If option doesn't exist, create it.
 			if ( false === $current_value ) {
 				add_option( $option_name, $value );
-			} // If it's the sync interval and it's not in allowed values, fix it.
-			elseif ( 'sync_interval' === $key && ! self::is_valid_interval( $current_value ) ) {
+			} elseif ( 'sync_interval' === $key && ! self::is_valid_interval( $current_value ) ) {
+				// If it is the sync interval and it is not in allowed values, fix it.
 				update_option( $option_name, $value );
 			}
 		}

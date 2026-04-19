@@ -110,4 +110,3 @@ class Manual_Creator {
 		return true;
 	}
 }
-

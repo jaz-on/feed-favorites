@@ -74,16 +74,6 @@ class Validator {
 			if ( ! in_array( $parsed['scheme'], array( 'https', 'http' ), true ) ) {
 				return false;
 			}
-
-			// Prefer HTTPS for security.
-			if ( 'https' !== $parsed['scheme'] ) {
-				// Log warning for non-HTTPS URLs using WordPress logging.
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					// Use WordPress error logging instead of custom logger to avoid dependency issues.
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					// error_log( "Feed Favorites: Non-HTTPS URL detected: {$url}" );
-				}
-			}
 		}
 
 		// Block potentially dangerous URLs.

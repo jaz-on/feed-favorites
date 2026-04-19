@@ -186,4 +186,3 @@ function feed_favorites_is_manual( $post_id = null ) {
 function feed_favorites_is_rss_import( $post_id = null ) {
 	return Template_Tags::is_rss_import( $post_id );
 }
-

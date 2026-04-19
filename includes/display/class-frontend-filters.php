@@ -167,4 +167,3 @@ class Frontend_Filters {
 		}
 	}
 }
-

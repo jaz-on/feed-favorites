@@ -101,15 +101,63 @@ $current_tab = ( $nonce_ok && isset( $_GET['tab'] ) ) ? sanitize_text_field( wp_
 	</div>
 	
 	<nav class="nav-tab-wrapper wp-clearfix">
-		<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'post_type' => 'favorite', 'page' => 'feed-favorites', 'tab' => 'dashboard' ), admin_url( 'edit.php' ) ), 'feed_favorites_admin' ) ); ?>" class="nav-tab <?php echo 'dashboard' === $current_tab ? 'nav-tab-active' : ''; ?>">
+		<a href="
+		<?php
+		echo esc_url(
+			wp_nonce_url(
+				add_query_arg(
+					array(
+						'post_type' => 'favorite',
+						'page' => 'feed-favorites',
+						'tab' => 'dashboard',
+					),
+					admin_url( 'edit.php' )
+				),
+				'feed_favorites_admin'
+			)
+		);
+		?>
+		" class="nav-tab <?php echo 'dashboard' === $current_tab ? 'nav-tab-active' : ''; ?>">
 			<span class="dashicons dashicons-admin-home"></span>
 			<?php esc_html_e( 'Dashboard', 'feed-favorites' ); ?>
 		</a>
-		<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'post_type' => 'favorite', 'page' => 'feed-favorites', 'tab' => 'setup' ), admin_url( 'edit.php' ) ), 'feed_favorites_admin' ) ); ?>" class="nav-tab <?php echo 'setup' === $current_tab ? 'nav-tab-active' : ''; ?>">
+		<a href="
+		<?php
+		echo esc_url(
+			wp_nonce_url(
+				add_query_arg(
+					array(
+						'post_type' => 'favorite',
+						'page' => 'feed-favorites',
+						'tab' => 'setup',
+					),
+					admin_url( 'edit.php' )
+				),
+				'feed_favorites_admin'
+			)
+		);
+		?>
+		" class="nav-tab <?php echo 'setup' === $current_tab ? 'nav-tab-active' : ''; ?>">
 			<span class="dashicons dashicons-admin-settings"></span>
 			<?php esc_html_e( 'Setup', 'feed-favorites' ); ?>
 		</a>
-		<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'post_type' => 'favorite', 'page' => 'feed-favorites', 'tab' => 'maintenance' ), admin_url( 'edit.php' ) ), 'feed_favorites_admin' ) ); ?>" class="nav-tab <?php echo 'maintenance' === $current_tab ? 'nav-tab-active' : ''; ?>">
+		<a href="
+		<?php
+		echo esc_url(
+			wp_nonce_url(
+				add_query_arg(
+					array(
+						'post_type' => 'favorite',
+						'page' => 'feed-favorites',
+						'tab' => 'maintenance',
+					),
+					admin_url( 'edit.php' )
+				),
+				'feed_favorites_admin'
+			)
+		);
+		?>
+		" class="nav-tab <?php echo 'maintenance' === $current_tab ? 'nav-tab-active' : ''; ?>">
 			<span class="dashicons dashicons-admin-tools"></span>
 			<?php esc_html_e( 'Maintenance', 'feed-favorites' ); ?>
 		</a>

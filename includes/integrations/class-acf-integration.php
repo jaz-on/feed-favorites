@@ -108,4 +108,3 @@ class ACF_Integration {
 		}
 	}
 }
-

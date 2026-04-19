@@ -35,17 +35,17 @@ if ( function_exists( 'get_header' ) ) {
 					$show_emoji = (bool) $show_emoji;
 				}
 
-				$title = get_the_title();
-				$emoji = '';
+				$entry_title = get_the_title();
+				$emoji       = '';
 
-				if ( ! empty( $title ) ) {
+				if ( ! empty( $entry_title ) ) {
 					// Extract emoji from title if present (Unicode emoji range).
 					$emoji_pattern = '/[\x{1F300}-\x{1F9FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]/u';
-					if ( preg_match( $emoji_pattern, $title, $matches ) ) {
+					if ( preg_match( $emoji_pattern, $entry_title, $matches ) ) {
 						$emoji = $matches[0];
 						// Remove emoji from title.
-						$title = preg_replace( $emoji_pattern, '', $title );
-						$title = trim( $title );
+						$entry_title = preg_replace( $emoji_pattern, '', $entry_title );
+						$entry_title = trim( $entry_title );
 					}
 
 					// If show_emoji is true and no emoji found, add default emoji.
@@ -63,7 +63,7 @@ if ( function_exists( 'get_header' ) ) {
 					<?php if ( ! empty( $emoji ) ) : ?>
 						<span class="entry-emoji"><?php echo esc_html( $emoji ); ?></span>
 					<?php endif; ?>
-					<?php echo esc_html( $title ); ?>
+					<?php echo esc_html( $entry_title ); ?>
 				</h1>
 			</header>
 

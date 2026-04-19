@@ -1,6 +1,6 @@
 # Feed Favorites
 
-![WordPress](https://img.shields.io/badge/WordPress-6.5+-blue)
+![WordPress](https://img.shields.io/badge/WordPress-6.9-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2+-blue)
 ![License](https://img.shields.io/badge/License-GPL%20v2+-green)
 
@@ -44,6 +44,19 @@
 cd wp-content/plugins/
 git clone https://github.com/jaz-on/feed-favorites.git
 ```
+
+### Branches, Git Updater, and releases
+
+- **`main`**: stable line; production sites and [Git Updater](https://git-updater.com/) should follow this branch (`Primary Branch: main` in the plugin header).
+- **`dev`**: integration branch for ongoing work; merge into `main` after validation, then tag a release on `main` (for example `v1.0.1`).
+
+### Manual QA checklist (before merging `dev` → `main`)
+
+1. Activate the plugin on a test site (PHP 8.2+, WordPress version you target).
+2. **Settings → Feed Favorites**: save options, run a manual sync with a real feed URL.
+3. **Favorites → Add New**: publish a manual favorite (external URL, optional summary/commentary); confirm single view and front-end template.
+4. If you use it: run a **JSON import** sample and confirm posts and logs.
+5. Review **logs/statistics** in admin for errors.
 
 ## Configuration
 
@@ -239,6 +252,13 @@ Duplicates are detected using the external URL. The plugin checks both the nativ
 All favorite posts use the WordPress 'link' post format for better theme integration.
 
 ## Changelog
+
+### 1.0.1
+
+- Stable branch for Git Updater set to `main`; documentation for branch workflow and manual QA.
+- Aligned plugin headers and `readme.txt` with **Tested up to: 6.9**.
+- Continuous integration: PHPCS and PHPUnit (WordPress test suite) via GitHub Actions; `phpunit.xml.dist` and `bin/install-wp-tests.sh` for automated tests.
+- Migration runner only executes the 1.0.0 data migration when upgrading from below 1.0.0 (avoids re-running on 1.0.1).
 
 ### 1.0.0
 

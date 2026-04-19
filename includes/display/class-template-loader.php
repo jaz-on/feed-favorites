@@ -99,4 +99,3 @@ class Template_Loader {
 		return (bool) $has_template;
 	}
 }
-

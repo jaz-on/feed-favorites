@@ -28,7 +28,13 @@
     "require": {
         "php": "^8.2"
     },
-    "require-dev": {},
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "phpunit/phpunit": "^9.6",
+        "squizlabs/php_codesniffer": "^3.10",
+        "wp-coding-standards/wpcs": "^3.1"
+    },
     "autoload": {
         "psr-4": {
             "FeedFavorites\\": "includes/"
@@ -41,8 +47,8 @@
     },
     "scripts": {
         "test": "phpunit",
-        "phpcs": "phpcs --standard=WordPress includes/ --exclude=WordPress.NamingConventions.ValidVariableName,WordPress.DB.SlowDBQuery,WordPress.WP.CronInterval,WordPress.WP.AlternativeFunctions,WordPress.Security.NonceVerification,WordPress.WP.I18n,Squiz.ControlStructures.ControlSignature",
-        "phpcbf": "phpcbf --standard=WordPress includes/",
+        "phpcs": "phpcs",
+        "phpcbf": "phpcbf",
         "test:coverage": "phpunit --coverage-html coverage/"
     },
     "config": {

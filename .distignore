@@ -1,4 +1,7 @@
 # Exclude development and hidden files from plugin zip
+.github/
+bin/
+phpunit.xml.dist
 .DS_Store
 **/.DS_Store
 .git/

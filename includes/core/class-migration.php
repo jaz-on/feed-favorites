@@ -23,7 +23,7 @@ class Migration {
 	 *
 	 * @var string
 	 */
-	const CURRENT_VERSION = '1.0.0';
+	const CURRENT_VERSION = '1.0.1';
 
 	/**
 	 * Option name for stored version.
@@ -38,10 +38,13 @@ class Migration {
 	 * @return void
 	 */
 	public static function run() {
-		$current_version = get_option( self::VERSION_OPTION, '1.0.0' );
+		$stored_version = get_option( self::VERSION_OPTION, '0.0.0' );
 
-		if ( version_compare( $current_version, self::CURRENT_VERSION, '<' ) ) {
+		if ( version_compare( $stored_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
+		}
+
+		if ( version_compare( $stored_version, self::CURRENT_VERSION, '<' ) ) {
 			update_option( self::VERSION_OPTION, self::CURRENT_VERSION );
 		}
 	}
@@ -156,4 +159,3 @@ class Migration {
 		}
 	}
 }
-
