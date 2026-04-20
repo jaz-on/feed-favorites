@@ -21,7 +21,8 @@ class Admin {
 	 */
 	public function __construct() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-		add_filter( 'plugin_action_links', array( $this, 'add_plugin_action_links' ), 10, 2 );
+		add_filter( 'plugin_action_links_' . plugin_basename( FEED_FAVORITES_PLUGIN_FILE ), array( $this, 'add_plugin_action_links' ) );
+		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
 	}
 
 	/**
@@ -77,20 +78,45 @@ class Admin {
 	/**
 	 * Add plugin action links.
 	 *
-	 * @param array  $links The existing action links.
-	 * @param string $file The plugin file.
+	 * @param array $links The existing action links.
 	 * @return array Modified action links.
 	 */
-	public function add_plugin_action_links( $links, $file ) {
-		if ( plugin_basename( FEED_FAVORITES_PLUGIN_PATH . 'feed-favorites.php' ) === $file ) {
-			$settings_link = sprintf(
-				'<a href="%s">%s</a>',
-				esc_url( admin_url( 'edit.php?post_type=favorite&page=feed-favorites' ) ),
-				__( 'Settings', 'feed-favorites' )
-			);
-			array_unshift( $links, $settings_link );
-		}
+	public function add_plugin_action_links( $links ) {
+		$settings_link = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( admin_url( 'edit.php?post_type=favorite&page=feed-favorites' ) ),
+			__( 'Settings', 'feed-favorites' )
+		);
+		array_unshift( $links, $settings_link );
 		return $links;
+	}
+
+	/**
+	 * Add GitHub and Donate links to the plugin meta row.
+	 *
+	 * @param array  $plugin_meta An array of plugin row meta links.
+	 * @param string $plugin_file Path to the plugin file relative to the plugins directory.
+	 * @return array Plugin row meta links.
+	 */
+	public function add_plugin_row_meta( $plugin_meta, $plugin_file ) {
+		if ( plugin_basename( FEED_FAVORITES_PLUGIN_FILE ) !== $plugin_file ) {
+			return $plugin_meta;
+		}
+
+		$new_links = array(
+			sprintf(
+				'<a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>',
+				esc_url( FEED_FAVORITES_GITHUB_URL ),
+				esc_html__( 'GitHub', 'feed-favorites' )
+			),
+			sprintf(
+				'<a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>',
+				esc_url( FEED_FAVORITES_KOFI_URL ),
+				esc_html__( 'Donate', 'feed-favorites' )
+			),
+		);
+
+		return array_merge( $plugin_meta, $new_links );
 	}
 
 	/**
