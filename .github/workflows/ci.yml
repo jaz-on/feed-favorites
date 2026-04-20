@@ -10,13 +10,17 @@ jobs:
   phpcs:
     name: PHPCS
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.2', '8.3']
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: ${{ matrix.php-version }}
           tools: composer
 
       - name: Install Composer dependencies
@@ -26,11 +30,12 @@ jobs:
         run: composer run phpcs
 
   phpunit:
-    name: PHPUnit (WP ${{ matrix.wordpress }})
+    name: PHPUnit (PHP ${{ matrix.php-version }}, WP ${{ matrix.wordpress }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        php-version: ['8.2', '8.3']
         wordpress: ['latest']
 
     services:
@@ -58,7 +63,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: ${{ matrix.php-version }}
           extensions: mysqli
           tools: composer
 

@@ -4,7 +4,7 @@ Tags: rss, synchronization, import, bookmarks, favorites
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 8.2
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -36,9 +36,9 @@ Feed Favorites synchronizes starred articles from RSS feeds with your WordPress 
 
 == Frequently Asked Questions ==
 
-= What RSS feeds are supported? =
+= What RSS or Atom feeds are supported? =
 
-Standard RSS 2.0 feeds. It works well with Feedbin starred article feeds and any feed containing article data.
+RSS 2.0 and Atom (e.g. Feedbin starred feeds). Any feed containing article entries with title and link works.
 
 = Can I import my existing favorites? =
 
@@ -139,6 +139,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 == Changelog ==
+
+= 1.0.2 =
+* Translations: load text domain for `languages` MO/PO files
+* Sync: shared lock for manual and cron runs; configurable author for synced posts; store items processed on last successful sync; Atom feeds supported alongside RSS 2.0
+* Security: dedicated `manage_feed_favorites` capability (granted to Administrators; grant to other roles as needed)
+* SEO: skip default meta/JSON-LD when a major SEO plugin is detected; override with `feed_favorites_output_seo_meta` filter
+* Developer: removed unused Composer PSR-4 autoload entries; PHPUnit coverage for feed parsing; CI runs on PHP 8.2 and 8.3
 
 = 1.0.1 =
 * Git Updater: primary branch set to `main` for stable updates

@@ -33,7 +33,7 @@ class FeedFavorites {
 	 *
 	 * @var string
 	 */
-	const VERSION = '1.0.1';
+	const VERSION = '1.0.2';
 
 	/**
 	 * Admin instance.
@@ -95,6 +95,7 @@ class FeedFavorites {
 	 * @return void
 	 */
 	private function init_hooks() {
+		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ), 0 );
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
@@ -117,6 +118,19 @@ class FeedFavorites {
 			},
 			10,
 			0
+		);
+	}
+
+	/**
+	 * Load plugin translations.
+	 *
+	 * @return void
+	 */
+	public function load_textdomain() {
+		load_plugin_textdomain(
+			'feed-favorites',
+			false,
+			dirname( plugin_basename( FEED_FAVORITES_PLUGIN_FILE ) ) . '/languages'
 		);
 	}
 
@@ -180,6 +194,7 @@ class FeedFavorites {
 		// Load core classes first.
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-config.php';
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/core/class-post-meta.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/core/class-capabilities.php';
 		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/core/class-migration.php';
 
 		// Load other classes.
@@ -237,8 +252,17 @@ class FeedFavorites {
 			wp_die( 'Feed Favorites requires PHP 8.2+ and WordPress 5.0+' );
 		}
 
+		// Bootstrap classes needed before plugins_loaded (activation runs early).
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-config.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/core/class-post-meta.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/class-logger.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/core/class-capabilities.php';
+		require_once FEED_FAVORITES_PLUGIN_PATH . 'includes/core/class-migration.php';
+
 		// Initialize configuration.
 		Config::init_defaults();
+
+		Capabilities::register();
 
 		// Run migration.
 		Migration::run();
@@ -331,7 +355,7 @@ class FeedFavorites {
 			'edit.php?post_type=favorite',
 			__( 'Feed Favorites Settings', 'feed-favorites' ),
 			__( 'Settings', 'feed-favorites' ),
-			'manage_options',
+			Capabilities::MANAGE,
 			'feed-favorites',
 			array( $this, 'admin_page' )
 		);
@@ -371,6 +395,9 @@ class FeedFavorites {
 			'max_items'             => array(
 				'sanitize_callback' => array( Validator::class, 'validate_max_items' ),
 			),
+			'sync_post_author'      => array(
+				'sanitize_callback' => array( Validator::class, 'validate_sync_post_author' ),
+			),
 			'default_show_emoji'    => array(
 				'sanitize_callback' => array( Validator::class, 'validate_boolean_option' ),
 			),
@@ -404,7 +431,7 @@ class FeedFavorites {
 	 */
 	public function admin_page() {
 		// Check permissions.
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
 			wp_die( esc_html__( 'You do not have sufficient permissions.', 'feed-favorites' ) );
 		}
 

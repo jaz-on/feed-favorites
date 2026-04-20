@@ -92,10 +92,11 @@ class Logger {
 	 */
 	public function get_stats() {
 		$stats = array(
-			'total_posts' => $this->get_total_posts(),
-			'last_sync'   => get_option( 'feed_favorites_last_sync' ),
-			'sync_count'  => get_option( 'feed_favorites_sync_count', 0 ),
-			'error_count' => get_option( 'feed_favorites_error_count', 0 ),
+			'total_posts'      => $this->get_total_posts(),
+			'last_sync'        => get_option( 'feed_favorites_last_sync' ),
+			'last_sync_items'  => absint( Config::get( 'last_sync_items', 0 ) ),
+			'sync_count'       => get_option( 'feed_favorites_sync_count', 0 ),
+			'error_count'      => get_option( 'feed_favorites_error_count', 0 ),
 		);
 
 		return $stats;
@@ -223,6 +224,7 @@ class Logger {
 		update_option( 'feed_favorites_sync_count', 0 );
 		update_option( 'feed_favorites_error_count', 0 );
 		update_option( 'feed_favorites_last_sync', '' );
+		Config::set( 'last_sync_items', 0 );
 
 		// Note: We don't delete existing posts, only statistics.
 		// If user wants to delete posts, they can do it manually.

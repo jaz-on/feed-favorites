@@ -35,16 +35,6 @@
         "squizlabs/php_codesniffer": "^3.10",
         "wp-coding-standards/wpcs": "^3.1"
     },
-    "autoload": {
-        "psr-4": {
-            "FeedFavorites\\": "includes/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "FeedFavorites\\Tests\\": "tests/"
-        }
-    },
     "scripts": {
         "test": "phpunit",
         "phpcs": "phpcs",

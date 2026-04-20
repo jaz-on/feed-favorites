@@ -35,7 +35,7 @@ class Import {
 		}
 
 		// Check permissions.
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
 			wp_die( esc_html__( 'Insufficient permissions', 'feed-favorites' ) );
 		}
 

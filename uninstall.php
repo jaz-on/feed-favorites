@@ -30,6 +30,8 @@ $options_to_delete = array(
 	'feed_favorites_link_summary_required',
 	'feed_favorites_commentary_required',
 	'feed_favorites_use_link_format',
+	'feed_favorites_sync_post_author',
+	'feed_favorites_last_sync_items',
 	'feed_favorites_last_sync',
 	'feed_favorites_sync_count',
 	'feed_favorites_error_count',
@@ -45,6 +47,9 @@ foreach ( $options_to_delete as $option ) {
 
 // Clean up transients.
 delete_transient( 'feed_favorites_sync_lock' );
+
+require_once __DIR__ . '/includes/core/class-capabilities.php';
+Capabilities::remove_from_roles();
 
 // Clean up scheduled events.
 wp_clear_scheduled_hook( 'feed_favorites_cron_sync' );

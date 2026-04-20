@@ -183,9 +183,17 @@ feed-favorites/
 └── languages/
 ```
 
+## Internationalization
+
+Generate a POT for translators (requires [WP-CLI i18n](https://developer.wordpress.org/cli/commands/i18n/)):
+
+```bash
+wp i18n make-pot . languages/feed-favorites.pot --domain=feed-favorites --exclude=vendor,node_modules
+```
+
 ## Security
 
-- All admin actions require proper capabilities and nonces
+- All admin actions require the `manage_feed_favorites` capability (Administrators receive it on install/upgrade) and nonces where applicable
 - AJAX requests are rate-limited and validate input URLs
 - XML parsing forbids external network access and limits response size
 - All data is sanitized and validated before storage
@@ -252,6 +260,14 @@ Duplicates are detected using the external URL. The plugin checks both the nativ
 All favorite posts use the WordPress 'link' post format for better theme integration.
 
 ## Changelog
+
+### 1.0.2
+
+- Load `load_plugin_textdomain` for translations; documented `wp i18n make-pot` workflow.
+- Sync: transient lock shared by manual and cron sync; `sync_post_author` option (default: first administrator); `last_sync_items` statistic; Atom feed support in addition to RSS 2.0.
+- New `manage_feed_favorites` capability for settings, sync, import, and AJAX (Administrators only by default).
+- SEO integration defers to Yoast, Rank Math, SEOPress, AIOSEO, The SEO Framework when detected; filter `feed_favorites_output_seo_meta` to override.
+- Composer: removed unused PSR-4 autoload blocks; PHPUnit tests for feed parsing; CI matrix for PHP 8.2 and 8.3.
 
 ### 1.0.1
 

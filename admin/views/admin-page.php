@@ -53,12 +53,13 @@ $rss_posts = get_posts(
 );
 
 $stats = array(
-	'total_posts'  => $total_posts,
-	'manual_posts' => count( $manual_posts ),
-	'rss_posts'    => count( $rss_posts ),
-	'sync_count'   => get_option( 'feed_favorites_sync_count', 0 ),
-	'error_count'  => get_option( 'feed_favorites_error_count', 0 ),
-	'last_sync'    => get_option( 'feed_favorites_last_sync', '' ),
+	'total_posts'      => $total_posts,
+	'manual_posts'     => count( $manual_posts ),
+	'rss_posts'        => count( $rss_posts ),
+	'sync_count'       => get_option( 'feed_favorites_sync_count', 0 ),
+	'error_count'      => get_option( 'feed_favorites_error_count', 0 ),
+	'last_sync'        => get_option( 'feed_favorites_last_sync', '' ),
+	'last_sync_items'  => absint( Config::get( 'last_sync_items', 0 ) ),
 );
 
 // Get recent logs.
@@ -166,7 +167,7 @@ $current_tab = ( $nonce_ok && isset( $_GET['tab'] ) ) ? sanitize_text_field( wp_
 	<?php
 	switch ( $current_tab ) {
 		case 'dashboard':
-			$admin->render_dashboard_tab( $stats, $logs, $pending_stars );
+			$admin->render_dashboard_tab( $stats );
 			break;
 		case 'setup':
 			$admin->render_setup_tab();
@@ -175,7 +176,7 @@ $current_tab = ( $nonce_ok && isset( $_GET['tab'] ) ) ? sanitize_text_field( wp_
 			$admin->render_maintenance_tab( $stats, $logs );
 			break;
 		default:
-			$admin->render_dashboard_tab( $stats, $logs, $pending_stars );
+			$admin->render_dashboard_tab( $stats );
 			break;
 	}
 	?>

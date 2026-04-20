@@ -27,11 +27,59 @@ class SEO_Integration {
 	}
 
 	/**
+	 * Whether a known third-party SEO plugin is active.
+	 *
+	 * @return bool
+	 */
+	private function detect_third_party_seo_plugin() {
+		if ( defined( 'WPSEO_VERSION' ) ) {
+			return true;
+		}
+		if ( defined( 'RANK_MATH_VERSION' ) ) {
+			return true;
+		}
+		if ( defined( 'AIOSEO_VERSION' ) || defined( 'AIOSEO_PHP_VERSION_DIR' ) ) {
+			return true;
+		}
+		if ( defined( 'SEOPRESS_VERSION' ) ) {
+			return true;
+		}
+		if ( defined( 'THE_SEO_FRAMEWORK_VERSION' ) || class_exists( 'The_SEO_Framework\Load', false ) ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Whether this plugin should output its own meta tags and JSON-LD.
+	 *
+	 * @return bool
+	 */
+	private function should_output_seo() {
+		$detected = $this->detect_third_party_seo_plugin();
+
+		/**
+		 * Filters whether Feed Favorites prints default SEO meta and structured data.
+		 *
+		 * Default is false when a known SEO plugin is active, to avoid duplicate tags.
+		 *
+		 * @since 1.0.2
+		 *
+		 * @param bool $output Default output decision.
+		 */
+		return (bool) apply_filters( 'feed_favorites_output_seo_meta', ! $detected );
+	}
+
+	/**
 	 * Add meta tags for SEO.
 	 *
 	 * @return void
 	 */
 	public function add_meta_tags() {
+		if ( ! $this->should_output_seo() ) {
+			return;
+		}
+
 		if ( ! is_singular( 'favorite' ) ) {
 			return;
 		}
@@ -73,7 +121,7 @@ class SEO_Integration {
 		echo '<meta name="twitter:card" content="summary" />' . "\n";
 		echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '" />' . "\n";
 		if ( ! empty( $link_summary ) ) {
-			$twitter_description = wp_strip_all_tags( $link_summary );
+			$twitter_description  = wp_strip_all_tags( $link_summary );
 			$twitter_description = wp_trim_words( $twitter_description, 30, '...' );
 			echo '<meta name="twitter:description" content="' . esc_attr( $twitter_description ) . '" />' . "\n";
 		}
@@ -91,6 +139,10 @@ class SEO_Integration {
 	 * @return void
 	 */
 	public function add_structured_data() {
+		if ( ! $this->should_output_seo() ) {
+			return;
+		}
+
 		if ( ! is_singular( 'favorite' ) ) {
 			return;
 		}
@@ -105,9 +157,9 @@ class SEO_Integration {
 		$source_site   = Template_Tags::get_source_site( $post_id );
 
 		$structured_data = array(
-			'@context' => 'https://schema.org',
-			'@type'    => 'Article',
-			'headline' => get_the_title( $post_id ),
+			'@context'      => 'https://schema.org',
+			'@type'         => 'Article',
+			'headline'      => get_the_title( $post_id ),
 			'datePublished' => get_the_date( 'c', $post_id ),
 			'dateModified'  => get_the_modified_date( 'c', $post_id ),
 		);

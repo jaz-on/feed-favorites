@@ -49,7 +49,7 @@ class Validator {
 		}
 
 		if ( ! self::is_valid_feed_url( $url ) ) {
-			return new WP_Error( 'invalid_feed_format', __( 'Invalid RSS feed URL format. Please provide a valid RSS feed URL.', 'feed-favorites' ) );
+			return new WP_Error( 'invalid_feed_format', __( 'Invalid feed URL format. Please provide a valid RSS or Atom feed URL.', 'feed-favorites' ) );
 		}
 
 		return $url;
@@ -198,6 +198,20 @@ class Validator {
 	}
 
 	/**
+	 * Validate user ID used as author for synced posts (0 = automatic).
+	 *
+	 * @param mixed $value The submitted value.
+	 * @return int User ID or 0.
+	 */
+	public static function validate_sync_post_author( $value ) {
+		$id = absint( $value );
+		if ( 0 === $id ) {
+			return 0;
+		}
+		return get_userdata( $id ) ? $id : 0;
+	}
+
+	/**
 	 * Complete validation of a data set.
 	 *
 	 * @param array $data The data to validate.
@@ -281,7 +295,7 @@ class Validator {
 				return in_array( $value, array( 0, 1, '0', '1', true, false ), true ) ? true : new WP_Error( 'invalid_boolean', __( 'Value must be a boolean.', 'feed-favorites' ) );
 
 			case 'feed_format':
-				return self::is_valid_feed_url( $value ) ? true : new WP_Error( 'invalid_feed_format', __( 'Invalid RSS feed URL format.', 'feed-favorites' ) );
+				return self::is_valid_feed_url( $value ) ? true : new WP_Error( 'invalid_feed_format', __( 'Invalid RSS or Atom feed URL format.', 'feed-favorites' ) );
 
 			case 'valid_interval':
 				$allowed_intervals = array( 900, 1800, 3600, 7200, 14400, 86400 );

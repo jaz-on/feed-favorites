@@ -79,13 +79,19 @@ class Http {
 	}
 
 	/**
-	 * Validate XML feed.
+	 * Atom namespace URI.
 	 *
-	 * @param string $body The XML body to validate.
-	 * @return SimpleXMLElement|WP_Error Valid XML object or error.
+	 * @var string
 	 */
-	public static function validate_xml( $body ) {
-		// Validate XML format (block external entity loader / network).
+	const ATOM_NS = 'http://www.w3.org/2005/Atom';
+
+	/**
+	 * Parse feed body into a list of native RSS items or Atom entries.
+	 *
+	 * @param string $body The XML body.
+	 * @return array{type: string, items: SimpleXMLElement[]}|WP_Error
+	 */
+	public static function parse_feed_document( $body ) {
 		libxml_use_internal_errors( true );
 		$xml = simplexml_load_string( $body, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING );
 		libxml_clear_errors();
@@ -94,12 +100,56 @@ class Http {
 			return new WP_Error( 'invalid_xml', __( 'Content is not valid XML.', 'feed-favorites' ) );
 		}
 
-		// Check RSS structure.
-		if ( ! isset( $xml->channel->item ) ) {
+		if ( isset( $xml->channel->item ) ) {
+			$items = array();
+			foreach ( $xml->channel->item as $item ) {
+				$items[] = $item;
+			}
+			return array(
+				'type'  => 'rss',
+				'items' => $items,
+			);
+		}
+
+		if ( 'feed' === $xml->getName() ) {
+			$atom  = $xml->children( self::ATOM_NS );
+			$items = array();
+			if ( isset( $atom->entry ) ) {
+				foreach ( $atom->entry as $entry ) {
+					$items[] = $entry;
+				}
+			}
+			return array(
+				'type'  => 'atom',
+				'items' => $items,
+			);
+		}
+
+		return new WP_Error( 'invalid_feed', __( 'Format is not a recognized RSS or Atom feed.', 'feed-favorites' ) );
+	}
+
+	/**
+	 * Validate XML feed (RSS or Atom).
+	 *
+	 * @param string $body The XML body to validate.
+	 * @return SimpleXMLElement|WP_Error Legacy RSS root element for backward compatibility, or error.
+	 */
+	public static function validate_xml( $body ) {
+		$parsed = self::parse_feed_document( $body );
+
+		if ( is_wp_error( $parsed ) ) {
+			return $parsed;
+		}
+
+		if ( 'rss' !== $parsed['type'] ) {
 			return new WP_Error( 'invalid_rss', __( 'Format is not a valid RSS feed.', 'feed-favorites' ) );
 		}
 
-		return $xml;
+		libxml_use_internal_errors( true );
+		$xml = simplexml_load_string( $body, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING );
+		libxml_clear_errors();
+
+		return $xml ? $xml : new WP_Error( 'invalid_xml', __( 'Content is not valid XML.', 'feed-favorites' ) );
 	}
 
 	/**
@@ -115,19 +165,23 @@ class Http {
 			return $body;
 		}
 
-		$xml = self::validate_xml( $body );
+		$parsed = self::parse_feed_document( $body );
 
-		if ( is_wp_error( $xml ) ) {
-			return $xml;
+		if ( is_wp_error( $parsed ) ) {
+			return $parsed;
 		}
 
-		$entry_count = count( $xml->channel->item );
+		$entry_count = count( $parsed['items'] );
 
 		if ( 0 === $entry_count ) {
 			return __( 'Valid feed but empty. No starred articles found.', 'feed-favorites' );
 		} else {
-			/* translators: %d: Number of articles found */
-			return sprintf( __( 'Valid RSS feed! %d starred article(s) found.', 'feed-favorites' ), $entry_count );
+			return sprintf(
+				/* translators: 1: Feed format label (RSS or Atom), 2: Number of entries */
+				__( 'Valid %1$s feed! %2$d starred article(s) found.', 'feed-favorites' ),
+				'rss' === $parsed['type'] ? __( 'RSS', 'feed-favorites' ) : __( 'Atom', 'feed-favorites' ),
+				$entry_count
+			);
 		}
 	}
 }

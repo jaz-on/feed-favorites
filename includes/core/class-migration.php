@@ -23,7 +23,7 @@ class Migration {
 	 *
 	 * @var string
 	 */
-	const CURRENT_VERSION = '1.0.1';
+	const CURRENT_VERSION = '1.0.2';
 
 	/**
 	 * Option name for stored version.
@@ -44,8 +44,35 @@ class Migration {
 			self::migrate_to_1_0_0();
 		}
 
+		if ( version_compare( $stored_version, '1.0.2', '<' ) ) {
+			self::migrate_to_1_0_2();
+		}
+
 		if ( version_compare( $stored_version, self::CURRENT_VERSION, '<' ) ) {
 			update_option( self::VERSION_OPTION, self::CURRENT_VERSION );
+		}
+	}
+
+	/**
+	 * Migrate to version 1.0.2.
+	 *
+	 * Registers capabilities and ensures new options exist.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_1_0_2() {
+		Capabilities::register();
+
+		foreach (
+			array(
+				'sync_post_author'  => 0,
+				'last_sync_items'   => 0,
+			) as $key => $default
+		) {
+			$option_name = Config::OPTION_PREFIX . $key;
+			if ( false === get_option( $option_name ) ) {
+				add_option( $option_name, $default );
+			}
 		}
 	}
 

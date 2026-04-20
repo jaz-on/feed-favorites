@@ -42,7 +42,7 @@ class Ajax {
 		check_ajax_referer( $action, 'nonce' );
 
 		// Check permissions.
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
 			wp_die( esc_html__( 'Insufficient permissions', 'feed-favorites' ) );
 		}
 
@@ -182,16 +182,15 @@ class Ajax {
 			return $body;
 		}
 
-		$xml = Http::validate_xml( $body );
+		$parsed = Http::parse_feed_document( $body );
 
-		if ( is_wp_error( $xml ) ) {
-			return $xml;
+		if ( is_wp_error( $parsed ) ) {
+			return $parsed;
 		}
 
-		$items       = $xml->channel->item;
-		$total_count = count( $xml->channel->item );
+		$items       = $parsed['items'];
+		$total_count = count( $items );
 
-		// Generate HTML preview.
 		$html        = '<div class="rss-preview-items">';
 		$count       = 0;
 		$max_preview = 3;
@@ -201,10 +200,20 @@ class Ajax {
 				break;
 			}
 
-			$title  = sanitize_text_field( (string) $item->title );
-			$author = sanitize_text_field( (string) $item->author );
-			// phpcs:ignore WordPress.NamingConventions.ValidVariableName
-			$published = sanitize_text_field( (string) $item->pubDate );
+			if ( 'rss' === $parsed['type'] ) {
+				$title     = sanitize_text_field( (string) $item->title );
+				$author    = sanitize_text_field( (string) $item->author );
+				$published = sanitize_text_field( (string) $item->pubDate ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+			} else {
+				$ns        = Http::ATOM_NS;
+				$e         = $item->children( $ns );
+				$title     = sanitize_text_field( (string) $e->title );
+				$author    = isset( $e->author->name ) ? sanitize_text_field( (string) $e->author->name ) : '';
+				$published = isset( $e->updated ) ? sanitize_text_field( (string) $e->updated ) : '';
+				if ( '' === $published && isset( $e->published ) ) {
+					$published = sanitize_text_field( (string) $e->published );
+				}
+			}
 
 			$html .= '<div class="rss-preview-item">';
 			$html .= '<div class="rss-preview-title">' . esc_html( $title ) . '</div>';
@@ -213,7 +222,12 @@ class Ajax {
 				$html .= sprintf( /* translators: %s: author name */ esc_html__( 'By %s', 'feed-favorites' ), esc_html( $author ) ) . ' • ';
 			}
 			if ( $published ) {
-				$html .= sprintf( /* translators: %s: date */ esc_html__( 'Published on %s', 'feed-favorites' ), esc_html( gmdate( get_option( 'date_format' ), strtotime( $published ) ) ) );
+				$ts = strtotime( $published );
+				$html .= sprintf(
+					/* translators: %s: date */
+					esc_html__( 'Published on %s', 'feed-favorites' ),
+					esc_html( false !== $ts ? gmdate( get_option( 'date_format' ), $ts ) : $published )
+				);
 			}
 			$html .= '</div>';
 			$html .= '</div>';

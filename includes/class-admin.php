@@ -236,6 +236,12 @@ class Admin {
 							<div class="stat-label"><?php esc_html_e( 'Last Sync', 'feed-favorites' ); ?></div>
 							<div class="stat-description"><?php echo ! empty( $stats['last_sync'] ) ? esc_html__( 'Last synchronization', 'feed-favorites' ) : esc_html__( 'Never', 'feed-favorites' ); ?></div>
 						</div>
+
+						<div class="stat-card">
+							<div class="stat-number"><?php echo esc_html( isset( $stats['last_sync_items'] ) ? (string) (int) $stats['last_sync_items'] : '0' ); ?></div>
+							<div class="stat-label"><?php esc_html_e( 'Items Last Sync', 'feed-favorites' ); ?></div>
+							<div class="stat-description"><?php esc_html_e( 'New posts created in the last successful run', 'feed-favorites' ); ?></div>
+						</div>
 					</div>
 					
 					<div class="sync-status">
@@ -308,7 +314,7 @@ class Admin {
 						<table class="form-table">
 							<tr>
 								<th scope="row">
-									<label for="rss_feed_url"><?php esc_html_e( 'RSS Feed URL', 'feed-favorites' ); ?></label>
+									<label for="rss_feed_url"><?php esc_html_e( 'Feed URL', 'feed-favorites' ); ?></label>
 								</th>
 								<td>
 									<input type="url" 
@@ -317,7 +323,7 @@ class Admin {
 										value="<?php echo esc_attr( get_option( 'feed_favorites_feed_url' ) ); ?>" 
 										class="regular-text"
 										placeholder="https://example.com/feed/starred.xml" />
-									<p class="description"><?php esc_html_e( 'Your RSS feed URL with starred/favorite items', 'feed-favorites' ); ?></p>
+									<p class="description"><?php esc_html_e( 'RSS or Atom feed URL with starred/favorite items', 'feed-favorites' ); ?></p>
 								</td>
 							</tr>
 							
@@ -351,6 +357,27 @@ class Admin {
 										min="1" 
 										max="100" />
 									<p class="description"><?php esc_html_e( 'Maximum number of items to import per synchronization', 'feed-favorites' ); ?></p>
+								</td>
+							</tr>
+
+							<tr>
+								<th scope="row">
+									<label for="sync_post_author"><?php esc_html_e( 'Author for synced posts', 'feed-favorites' ); ?></label>
+								</th>
+								<td>
+									<?php
+									wp_dropdown_users(
+										array(
+											'name'              => 'feed_favorites_sync_post_author',
+											'id'                => 'sync_post_author',
+											'selected'          => absint( Config::get( 'sync_post_author', 0 ) ),
+											'show_option_none'  => __( 'Automatic (first administrator)', 'feed-favorites' ),
+											'option_none_value' => '0',
+											'capability'        => 'edit_posts',
+										)
+									);
+									?>
+									<p class="description"><?php esc_html_e( 'Posts created by RSS or cron sync are attributed to this user. Automatic picks the first administrator.', 'feed-favorites' ); ?></p>
 								</td>
 							</tr>
 							

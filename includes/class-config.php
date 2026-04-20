@@ -33,6 +33,8 @@ class Config {
 		'auto_sync'             => '1',
 		'sync_interval'         => '7200', // 2 hours default.
 		'max_items'             => 50,
+		'sync_post_author'      => 0,
+		'last_sync_items'       => 0,
 		'default_show_emoji'    => true,
 		'default_open_new_tab' => true,
 		'link_summary_required' => false,
